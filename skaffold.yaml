@@ -1,0 +1,9 @@
+apiVersion: skaffold/v1alpha2
+kind: Config
+build:
+  artifacts:
+  - imageName: gcr.io/rancho-de-newland/kubevalidator
+deploy:
+  kubectl:
+    manifests:
+    - config/kubernetes/default/**/*.yaml

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubevalidator
+  namespace: kubevalidator
+data:
+  # See https://github.com/milesp20/intel_nuc_led#usage
+  NUC_LED_READY: ring,09,none,green
+  NUC_LED_UNSCHEDULABLE: ring,50,fade_slow,yellow
+  NUC_LED_NOT_READY: ring,100,fade_slow,red
+  NUC_LED_ERROR: ring,100,blink_fast,red
