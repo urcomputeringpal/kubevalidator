@@ -24,17 +24,17 @@
   non-go = true
   unused-packages = true
 
-[[override]]
-  name = "k8s.io/client-go"
-  version = "~7.0"
-
-[[override]]
-  name = "k8s.io/apimachinery"
-  version = "kubernetes-1.10.0"
-
 [[constraint]]
   branch = "master"
   name = "github.com/google/go-github"
+
+[[override]]
+  name = "k8s.io/client-go"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/GoogleContainerTools/skaffold"
+  version = "v0.11.0"
 
 [[constraint]]
   name = "github.com/bradleyfalzon/ghinstallation"

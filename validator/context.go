@@ -3,6 +3,9 @@ package validator
 import (
 	"log"
 
+	"github.com/pkg/errors"
+
+	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
 	"github.com/google/go-github/github"
 )
 
@@ -21,6 +24,35 @@ func (c *Context) Process() {
 // ProcessCheckSuite validates the Kubernetes YAML that has changed on checks
 // associated with PRs.
 func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
-	log.Printf("processing %s\n", e)
+	if *e.Action == "requested" || *e.Action == "re-requested" {
+
+		// Determine which files to load
+		fileContent, _, _, err := c.github.Repositories.GetContents(*c.ctx, *e.Sender.Name, *e.Repo.Name, "skaffold.yaml", &github.RepositoryContentGetOptions{})
+		if err != nil {
+			log.Println(errors.Wrap(err, "Couldn't find skaffold.yaml"))
+			return
+		}
+		content, err := fileContent.GetContent()
+		if err != nil {
+			log.Println(errors.Wrap(err, "Couldn't parse contents"))
+			return
+		}
+
+		cfg, err := skaffold.GetConfig([]byte(content), true)
+		if err != nil {
+			log.Println(errors.Wrap(err, "Couldn't parse skaffold.yaml"))
+			return
+		}
+
+		log.Println(cfg.GetVersion())
+
+		// Determine which schema to use
+
+		// Kick off a check run
+
+		// Validate the files
+
+		// Annotate the PR
+	}
 	return
 }
