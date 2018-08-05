@@ -61,6 +61,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		skaffoldConfig := cfg.(*skaffold.SkaffoldConfig)
 
 		log.Println(skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
+		log.Println(skaffoldConfig.Deploy.DeployType.KustomizeDeploy.KustomizePath)
 
 		// Determine which schema to use
 
