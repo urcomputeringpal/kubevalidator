@@ -60,7 +60,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 
 		skaffoldConfig := cfg.(*skaffold.SkaffoldConfig)
 
-		log.Println(skaffoldConfig)
+		log.Println(skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
 
 		// Determine which schema to use
 
