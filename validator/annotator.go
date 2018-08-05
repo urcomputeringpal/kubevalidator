@@ -24,7 +24,7 @@ func (c *Context) AnnotateFile(bytes *[]byte, file *github.CommitFile) ([]*githu
 				WarningLevel: github.String("failure"),
 				Title:        github.String(fmt.Sprintf("%s", error.Description())),
 				Message:      github.String(fmt.Sprintf("%s", error)),
-				RawDetails:   github.String(fmt.Sprintf("`%#v`", error)),
+				RawDetails:   github.String(fmt.Sprintf("%#v", error)),
 			})
 		}
 	}
