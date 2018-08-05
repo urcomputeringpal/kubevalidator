@@ -3,6 +3,7 @@ package validator
 import (
 	"fmt"
 	"log"
+	"path"
 	"time"
 
 	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
@@ -27,6 +28,30 @@ func (c *Context) Process() {
 // associated with PRs.
 func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 	if *e.Action == "requested" || *e.Action == "re-requested" {
+
+		// Kick off a check run
+		checkRunStart := time.Now()
+		checkRunStatus := "in_progress"
+		checkRunTitle := "kubevalidator"
+		checkRunSummary := "Validating Kubernetes YAML"
+		checkRunOpt := github.CreateCheckRunOptions{
+			Name:       checkRunTitle,
+			HeadBranch: e.CheckSuite.GetHeadBranch(),
+			HeadSHA:    e.CheckSuite.GetHeadSHA(),
+			Status:     &checkRunStatus,
+			StartedAt:  &github.Timestamp{checkRunStart},
+			Output: &github.CheckRunOutput{
+				Title:   &checkRunTitle,
+				Summary: &checkRunSummary,
+			},
+		}
+
+		_, _, checkRunErr := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+		if checkRunErr != nil {
+			log.Println(errors.Wrap(checkRunErr, "Couldn't create check run"))
+			return
+		}
+
 		// Determine which files to load
 		fileContent, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), "skaffold.yaml", &github.RepositoryContentGetOptions{
 			Ref: e.CheckSuite.GetHeadSHA(),
@@ -64,30 +89,23 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 
 		if skaffoldConfig.Deploy.DeployType.KubectlDeploy == nil {
 			log.Println(errors.New("Couldn't find kubectl manifests in skaffold.yaml"))
-		}
-		log.Println(skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
-
-		// Kick off a check run
-		checkRunStart := time.Now()
-		checkRunStatus := "in_progress"
-		checkRunTitle := "kubevalidator"
-		checkRunSummary := "Validating Kubernetes YAML"
-		checkRunOpt := github.CreateCheckRunOptions{
-			Name:       checkRunTitle,
-			HeadBranch: e.CheckSuite.GetHeadBranch(),
-			HeadSHA:    e.CheckSuite.GetHeadSHA(),
-			Status:     &checkRunStatus,
-			StartedAt:  &github.Timestamp{checkRunStart},
-			Output: &github.CheckRunOutput{
-				Title:   &checkRunTitle,
-				Summary: &checkRunSummary,
-			},
-		}
-
-		_, _, checkRunErr := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
-		if checkRunErr != nil {
-			log.Println(errors.Wrap(checkRunErr, "Couldn't create check run"))
 			return
+		}
+
+		filesToValidate := make(map[string]*github.CommitFile)
+		for _, pr := range e.CheckSuite.PullRequests {
+			files, _, err := c.github.PullRequests.ListFiles(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), pr.GetNumber(), &github.ListOptions{})
+			if err != nil {
+				log.Println(errors.Wrap(err, "Couldn't list files"))
+				return
+			}
+			for _, file := range files {
+				for _, pattern := range skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests {
+					if matched, _ := path.Match(pattern, file.GetFilename()); matched {
+						filesToValidate[file.GetFilename()] = file
+					}
+				}
+			}
 		}
 
 		// Determine which schema to use
@@ -97,7 +115,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		// Annotate the PR
 		checkRunStatus = "completed"
 		checkRunConclusion := "neutral"
-		checkRunText := fmt.Sprintf("TODO: validate `%s`", skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
+		checkRunText := fmt.Sprintf("TODO: validate `%i` files matching %s", len(filesToValidate), skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
 		checkRunOpt = github.CreateCheckRunOptions{
 			Name:        checkRunTitle,
 			HeadBranch:  e.CheckSuite.GetHeadBranch(),
