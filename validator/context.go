@@ -3,10 +3,10 @@ package validator
 import (
 	"log"
 
-	"github.com/pkg/errors"
-
 	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
 	"github.com/google/go-github/github"
+	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Process handles webhook events kinda like Probot does
@@ -27,24 +27,41 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 	if *e.Action == "requested" || *e.Action == "re-requested" {
 
 		// Determine which files to load
-		fileContent, _, _, err := c.github.Repositories.GetContents(*c.ctx, *e.Sender.Name, *e.Repo.Name, "skaffold.yaml", &github.RepositoryContentGetOptions{})
+		fileContent, _, _, err := c.github.Repositories.GetContents(*c.ctx, *e.Sender.Name, *e.Repo.Name, "skaffold.yaml", &github.RepositoryContentGetOptions{
+			Ref: e.CheckSuite.GetHeadSHA(),
+		})
 		if err != nil {
 			log.Println(errors.Wrap(err, "Couldn't find skaffold.yaml"))
 			return
 		}
+
 		content, err := fileContent.GetContent()
 		if err != nil {
-			log.Println(errors.Wrap(err, "Couldn't parse contents"))
+			log.Println(errors.Wrap(err, "Couldn't load contents"))
 			return
 		}
 
-		cfg, err := skaffold.GetConfig([]byte(content), true)
+		apiVersion := &skaffold.APIVersion{}
+		err = yaml.Unmarshal([]byte(content), apiVersion)
 		if err != nil {
+			log.Println(errors.Wrap(err, "Couldn't parse api version out of skaffold.yaml"))
+			return
+		}
+
+		if apiVersion.Version != skaffold.LatestVersion {
+			log.Println(errors.New("skaffold.yaml out of date: run `skaffold fix`"))
+			return
+		}
+
+		cfg, skaffoldErr := skaffold.GetConfig([]byte(content), true)
+		if skaffoldErr != nil {
 			log.Println(errors.Wrap(err, "Couldn't parse skaffold.yaml"))
 			return
 		}
 
-		log.Println(cfg.GetVersion())
+		skaffoldConfig := cfg.(*skaffold.SkaffoldConfig)
+
+		log.Println(skaffoldConfig)
 
 		// Determine which schema to use
 
