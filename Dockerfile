@@ -8,5 +8,6 @@ RUN go install -v github.com/urcomputeringpal/kubevalidator
 
 
 FROM alpine
+RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 COPY --from=build /go/bin/kubevalidator /go/bin/kubevalidator
 ENTRYPOINT ["/go/bin/kubevalidator"]
