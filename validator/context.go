@@ -7,7 +7,6 @@ import (
 	"time"
 
 	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
-	"github.com/garethr/kubeval/kubeval"
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -112,8 +111,8 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		// TODO Determine which schema to use
 
 		// Validate the files
-		validationResults := make(map[string][]kubeval.ValidationResult)
-		for filename, _ := range filesToValidate {
+		var annotations []*github.CheckRunAnnotation
+		for filename, file := range filesToValidate {
 			fileToValidate, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), filename, &github.RepositoryContentGetOptions{
 				Ref: e.CheckSuite.GetHeadSHA(),
 			})
@@ -128,18 +127,31 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 				return
 			}
 
-			results, err := kubeval.Validate([]byte(contentToValidate), filename)
+			bytes := []byte(contentToValidate)
+			fileAnnotations, err := c.AnnotateFile(&bytes, file)
 			if err != nil {
-				log.Println(err)
+				log.Println(errors.Wrap(err, "Couldn't validate file"))
 				return
 			}
-			validationResults[filename] = results
+			annotations = append(annotations, fileAnnotations...)
 		}
 
 		// Annotate the PR
 		checkRunStatus = "completed"
-		checkRunConclusion := "neutral"
-		checkRunText := fmt.Sprintf("`%i`", validationResults)
+		var checkRunConclusion string
+		var checkRunText string
+		if len(filesToValidate) == 0 {
+			checkRunConclusion = "neutral"
+			checkRunText = "no files matched"
+		} else {
+			if len(annotations) > 0 {
+				checkRunConclusion = "failure"
+			} else {
+				checkRunConclusion = "success"
+			}
+			checkRunText = fmt.Sprintf("%d files checked, %d errors", len(filesToValidate), len(annotations))
+		}
+
 		checkRunOpt = github.CreateCheckRunOptions{
 			Name:        checkRunTitle,
 			HeadBranch:  e.CheckSuite.GetHeadBranch(),
@@ -149,9 +161,10 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			StartedAt:   &github.Timestamp{checkRunStart},
 			CompletedAt: &github.Timestamp{time.Now()},
 			Output: &github.CheckRunOutput{
-				Title:   &checkRunTitle,
-				Summary: &checkRunSummary,
-				Text:    &checkRunText,
+				Title:       &checkRunTitle,
+				Summary:     &checkRunSummary,
+				Text:        &checkRunText,
+				Annotations: annotations,
 			},
 		}
 
