@@ -35,7 +35,7 @@ func runWithContext(ctx context.Context) error {
 		return errors.New("PRIVATE_KEY_FILE required")
 	}
 
-	v := &validator.Validator{
+	v := &validator.Server{
 		Port:           portInt,
 		WebhookSecret:  webhookSecret,
 		AppID:          appIDInt,

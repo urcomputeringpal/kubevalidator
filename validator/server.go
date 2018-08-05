@@ -2,6 +2,7 @@ package validator
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,37 +11,26 @@ import (
 	"github.com/google/go-github/github"
 )
 
-// Validator contains the logic to dispatch PRs to kubeval
-type Validator struct {
-	Port            int
-	WebhookSecret   string
-	PrivateKeyFile  string
-	AppID           int
-	GitHubAppClient *github.Client
-	tr              http.RoundTripper
-	ctx             *context.Context
-}
-
 // Run starts a http server on the configured port
-func (v *Validator) Run(ctx context.Context) error {
-	v.tr = http.DefaultTransport
+func (s *Server) Run(ctx context.Context) error {
+	s.tr = &http.DefaultTransport
 
-	itr, err := ghinstallation.NewAppsTransportKeyFromFile(v.tr, v.AppID, v.PrivateKeyFile)
+	itr, err := ghinstallation.NewAppsTransportKeyFromFile(*s.tr, s.AppID, s.PrivateKeyFile)
 	if err != nil {
 		return err
 	}
 
-	v.ctx = &ctx
-	v.GitHubAppClient = github.NewClient(&http.Client{Transport: itr})
+	s.ctx = &ctx
+	s.GitHubAppClient = github.NewClient(&http.Client{Transport: itr})
 
-	http.HandleFunc("/webhook", v.handle)
-	http.HandleFunc("/", v.health)
+	http.HandleFunc("/webhook", s.handle)
+	http.HandleFunc("/", s.health)
 	log.Println("hi")
-	return http.ListenAndServe(fmt.Sprintf(":%d", v.Port), nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
 }
 
-func (v *Validator) handle(w http.ResponseWriter, r *http.Request) {
-	payload, err := github.ValidatePayload(r, []byte(v.WebhookSecret))
+func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
+	payload, err := github.ValidatePayload(r, []byte(s.WebhookSecret))
 	if err != nil {
 		log.Println(err)
 		return
@@ -53,16 +43,30 @@ func (v *Validator) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch e := event.(type) {
-	case *github.CheckSuiteEvent:
-		log.Printf("received %s\n", event)
-		return
-	default:
-		log.Printf("ignoring %s\n", e)
+	ge := &GenericEvent{}
+	err = json.Unmarshal(payload, &ge)
+	if err != nil {
+		log.Println(err)
 		return
 	}
+
+	// TODO what happens if the event doesn't have an installation ID?
+	itr, err := ghinstallation.NewKeyFromFile(*s.tr, s.AppID, int(ge.Installation.GetID()), s.PrivateKeyFile)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	c := &Context{
+		event:  event,
+		ctx:    s.ctx,
+		github: github.NewClient(&http.Client{Transport: itr}),
+	}
+
+	c.Process()
+	return
 }
 
-func (v *Validator) health(w http.ResponseWriter, r *http.Request) {
+func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "hi")
 }
