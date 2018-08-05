@@ -26,6 +26,7 @@ func (c *Context) Process() {
 func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 	if *e.Action == "requested" || *e.Action == "re-requested" {
 		// Determine which files to load
+		log.PrintLn(e.Repo.GetOwner())
 		fileContent, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), "skaffold.yaml", &github.RepositoryContentGetOptions{
 			Ref: e.CheckSuite.GetHeadSHA(),
 		})
