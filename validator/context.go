@@ -60,6 +60,9 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 
 		skaffoldConfig := cfg.(*skaffold.SkaffoldConfig)
 
+		if skaffoldConfig.Deploy.DeployType.KubectlDeploy == nil {
+			log.Println(errors.New("Couldn't find kubectl manifests in skaffold.yaml"))
+		}
 		log.Println(skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
 		log.Println(skaffoldConfig.Deploy.DeployType.KustomizeDeploy.KustomizePath)
 
