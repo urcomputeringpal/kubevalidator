@@ -19,8 +19,8 @@ func (c *Context) AnnotateFile(bytes *[]byte, file *github.CommitFile) ([]*githu
 			annotations = append(annotations, &github.CheckRunAnnotation{
 				FileName:     file.Filename,
 				BlobHRef:     file.BlobURL,
-				StartLine:    github.Int(0),
-				EndLine:      github.Int(0),
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
 				WarningLevel: github.String("failure"),
 				Title:        github.String(fmt.Sprintf("%s", error.Description())),
 				Message:      github.String(fmt.Sprintf("%s", error)),
