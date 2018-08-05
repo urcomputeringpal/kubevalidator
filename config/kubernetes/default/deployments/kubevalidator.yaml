@@ -17,7 +17,18 @@ spec:
         - name: kubevalidator
           image: gcr.io/rancho-de-newland/kubevalidator
           envFrom:
-          - configMapRef:
-              name: kubevalidator
           - secretRef:
               name: kubevalidator
+          volumeMounts:
+          - mountPath: /config
+            name: config
+          env:
+          - name: PRIVATE_KEY_FILE
+            value: /config/key.pem
+      volumes:
+      - name: config
+        secret:
+          secretName: kubevalidator
+          items:
+          - key: PRIVATE_KEY
+            path: key.pem

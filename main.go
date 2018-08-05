@@ -2,82 +2,47 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
+	"errors"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
-	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/github"
+	"github.com/urcomputeringpal/kubevalidator/validator"
 )
 
-type kubevalidator struct {
-	Port             int
-	WebhookSecretKey string
-	GitHubAppKeyFile string
-	GitHubAppID      int
-	GitHubAppClient  *github.Client
-	tr               http.RoundTripper
-	ctx              *context.Context
-}
-
-func (kv *kubevalidator) handle(w http.ResponseWriter, r *http.Request) {
-	payload, err := github.ValidatePayload(r, []byte(kv.WebhookSecretKey))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer r.Body.Close()
-
-	event, err := github.ParseWebHook(github.WebHookType(r), payload)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	switch e := event.(type) {
-	case *github.CheckSuiteEvent:
-		log.Printf("received %s\n", event)
-		return
-	default:
-		log.Printf("ignoring %s\n", e)
-		return
-	}
-}
-
-func (kv *kubevalidator) health(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "cool")
-}
-
 func runWithContext(ctx context.Context) error {
-	kv := kubevalidator{}
-	flag.IntVar(&kv.Port, "port", 8080, "port to listen on")
-	flag.StringVar(&kv.WebhookSecretKey, "webhook-secret", "", "webhook secret")
-	flag.StringVar(&kv.GitHubAppKeyFile, "github-app-key-file", "", "path to key file")
-	flag.IntVar(&kv.GitHubAppID, "github-app-id", -1, "app ID")
-	flag.Parse()
-	if len(flag.Args()) > 0 {
-		fmt.Printf("Unparsed arguments provided:\n\n%+v\n\n", flag.Args())
-		flag.Usage()
-		os.Exit(2)
+	port, ok := os.LookupEnv("PORT")
+	if !ok {
+		port = "8080"
+	}
+	portInt, _ := strconv.Atoi(port)
+
+	webhookSecret, ok := os.LookupEnv("WEBHOOK_SECRET")
+	if !ok {
+		return errors.New("WEBHOOK_SECRET required")
 	}
 
-	itr, err := ghinstallation.NewAppsTransportKeyFromFile(kv.tr, kv.GitHubAppID, kv.GitHubAppKeyFile)
-	if err != nil {
-		return err
+	appID, ok := os.LookupEnv("APP_ID")
+	if !ok {
+		return errors.New("APP_ID required")
+	}
+	appIDInt, _ := strconv.Atoi(appID)
+
+	privateKeyFile, ok := os.LookupEnv("PRIVATE_KEY_FILE")
+	if !ok {
+		return errors.New("PRIVATE_KEY_FILE required")
 	}
 
-	kv.ctx = &ctx
-	kv.tr = http.DefaultTransport
-	kv.GitHubAppClient = github.NewClient(&http.Client{Transport: itr})
+	v := &validator.Validator{
+		Port:           portInt,
+		WebhookSecret:  webhookSecret,
+		AppID:          appIDInt,
+		PrivateKeyFile: privateKeyFile,
+	}
 
-	http.HandleFunc("/webhook", kv.handle)
-	http.HandleFunc("/health", kv.health)
-	log.Println("hi")
-	return http.ListenAndServe(fmt.Sprintf(":%d", kv.Port), nil)
+	return v.Run(ctx)
 }
 
 func cancelOnInterrupt(ctx context.Context, f context.CancelFunc) {
