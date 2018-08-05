@@ -52,8 +52,8 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			return
 		}
 
-		cfg, skaffoldErr := skaffold.GetConfig([]byte(content), true)
-		if skaffoldErr != nil {
+		cfg, err := skaffold.GetConfig([]byte(content), true)
+		if err != nil {
 			log.Println(errors.Wrap(err, "Couldn't parse skaffold.yaml"))
 			return
 		}
