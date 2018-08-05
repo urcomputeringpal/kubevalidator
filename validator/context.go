@@ -1,7 +1,9 @@
 package validator
 
 import (
+	"fmt"
 	"log"
+	"time"
 
 	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
 	"github.com/google/go-github/github"
@@ -64,15 +66,58 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			log.Println(errors.New("Couldn't find kubectl manifests in skaffold.yaml"))
 		}
 		log.Println(skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
-		log.Println(skaffoldConfig.Deploy.DeployType.KustomizeDeploy.KustomizePath)
-
-		// Determine which schema to use
 
 		// Kick off a check run
+		checkRunStart := time.Now()
+		checkRunStatus := "in_progress"
+		checkRunTitle := "kubevalidator"
+		checkRunSummary := "Validating Kubernetes YAML"
+		checkRunOpt := github.CreateCheckRunOptions{
+			Name:       checkRunTitle,
+			HeadBranch: e.CheckSuite.GetHeadBranch(),
+			HeadSHA:    e.CheckSuite.GetHeadSHA(),
+			Status:     &checkRunStatus,
+			StartedAt:  &github.Timestamp{checkRunStart},
+			Output: &github.CheckRunOutput{
+				Title:   &checkRunTitle,
+				Summary: &checkRunSummary,
+			},
+		}
+
+		_, _, checkRunErr := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+		if checkRunErr != nil {
+			log.Println(errors.Wrap(checkRunErr, "Couldn't create check run"))
+			return
+		}
+
+		// Determine which schema to use
 
 		// Validate the files
 
 		// Annotate the PR
+		checkRunStatus = "completed"
+		checkRunConclusion := "neutral"
+		checkRunText := fmt.Sprintf("TODO: validate `%s`", skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
+		checkRunOpt = github.CreateCheckRunOptions{
+			Name:        checkRunTitle,
+			HeadBranch:  e.CheckSuite.GetHeadBranch(),
+			HeadSHA:     e.CheckSuite.GetHeadSHA(),
+			Status:      &checkRunStatus,
+			Conclusion:  &checkRunConclusion,
+			StartedAt:   &github.Timestamp{checkRunStart},
+			CompletedAt: &github.Timestamp{time.Now()},
+			Output: &github.CheckRunOutput{
+				Title:   &checkRunTitle,
+				Summary: &checkRunSummary,
+				Text:    &checkRunText,
+			},
+		}
+
+		_, _, finalCheckRunErr := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+		if finalCheckRunErr != nil {
+			log.Println(errors.Wrap(finalCheckRunErr, "Couldn't create check run"))
+			return
+		}
 	}
 	return
 }
