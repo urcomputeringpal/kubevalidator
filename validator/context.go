@@ -7,6 +7,7 @@ import (
 	"time"
 
 	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
+	"github.com/garethr/kubeval/kubeval"
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -108,14 +109,37 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			}
 		}
 
-		// Determine which schema to use
+		// TODO Determine which schema to use
 
 		// Validate the files
+		validationResults := make(map[string][]kubeval.ValidationResult)
+		for filename, _ := range filesToValidate {
+			fileToValidate, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), filename, &github.RepositoryContentGetOptions{
+				Ref: e.CheckSuite.GetHeadSHA(),
+			})
+			if err != nil {
+				log.Println(errors.Wrap(err, "Couldn't load file"))
+				return
+			}
+
+			contentToValidate, err := fileToValidate.GetContent()
+			if err != nil {
+				log.Println(errors.Wrap(err, "Couldn't load contents"))
+				return
+			}
+
+			results, err := kubeval.Validate([]byte(contentToValidate), filename)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			validationResults[filename] = results
+		}
 
 		// Annotate the PR
 		checkRunStatus = "completed"
 		checkRunConclusion := "neutral"
-		checkRunText := fmt.Sprintf("TODO: validate `%i` files matching %s", len(filesToValidate), skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests)
+		checkRunText := fmt.Sprintf("`%i`", validationResults)
 		checkRunOpt = github.CreateCheckRunOptions{
 			Name:        checkRunTitle,
 			HeadBranch:  e.CheckSuite.GetHeadBranch(),

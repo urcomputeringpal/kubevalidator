@@ -27,6 +27,18 @@
   version = "v3.2.0"
 
 [[projects]]
+  name = "github.com/fsnotify/fsnotify"
+  packages = ["."]
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  version = "v1.4.7"
+
+[[projects]]
+  name = "github.com/garethr/kubeval"
+  packages = ["kubeval"]
+  revision = "36730fe8f35d69c920a790c1be126ac37cbaabb8"
+  version = "0.7.1"
+
+[[projects]]
   name = "github.com/ghodss/yaml"
   packages = ["."]
   revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
@@ -66,6 +78,35 @@
   revision = "24818f796faf91cd76ec7bddd72458fbced7a6c1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/errwrap"
+  packages = ["."]
+  revision = "d6c0cd88035724dd42e0f335ae30161c20575ecc"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/go-multierror"
+  packages = ["."]
+  revision = "3d5d8f294aa03d8e98859feac328afbdf1ae0703"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/hcl"
+  packages = [
+    ".",
+    "hcl/ast",
+    "hcl/parser",
+    "hcl/printer",
+    "hcl/scanner",
+    "hcl/strconv",
+    "hcl/token",
+    "json/parser",
+    "json/scanner",
+    "json/token"
+  ]
+  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
+
+[[projects]]
   name = "github.com/imdario/mergo"
   packages = ["."]
   revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
@@ -78,10 +119,22 @@
   version = "1.1.4"
 
 [[projects]]
+  name = "github.com/magiconair/properties"
+  packages = ["."]
+  revision = "c2353362d570a7bfa228149c62842019201cfb71"
+  version = "v1.8.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
   revision = "58046073cbffe2f25d425fe1331102f55cf719de"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/mapstructure"
+  packages = ["."]
+  revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
 
 [[projects]]
   name = "github.com/modern-go/concurrent"
@@ -96,6 +149,12 @@
   version = "1.0.1"
 
 [[projects]]
+  name = "github.com/pelletier/go-toml"
+  packages = ["."]
+  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
+  version = "v1.2.0"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -108,10 +167,55 @@
   version = "v1.0.6"
 
 [[projects]]
+  name = "github.com/spf13/afero"
+  packages = [
+    ".",
+    "mem"
+  ]
+  revision = "787d034dfe70e44075ccc060d346146ef53270ad"
+  version = "v1.1.1"
+
+[[projects]]
+  name = "github.com/spf13/cast"
+  packages = ["."]
+  revision = "8965335b8c7107321228e3e3702cab9832751bac"
+  version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/spf13/jwalterweatherman"
+  packages = ["."]
+  revision = "7c0cea34c8ece3fbeb2b27ab9b59511d360fb394"
+
+[[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
   revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
   version = "v1.0.1"
+
+[[projects]]
+  name = "github.com/spf13/viper"
+  packages = ["."]
+  revision = "b5e8006cbee93ec955a89ab31e0e3ce3204f3736"
+  version = "v1.0.2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonpointer"
+  packages = ["."]
+  revision = "4e3ac2762d5f479393488629ee9370b50873b3a6"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonreference"
+  packages = ["."]
+  revision = "bd5ef7bd5415a7ac448318e64f11a24cd21e594b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xeipuuv/gojsonschema"
+  packages = ["."]
+  revision = "b84684d0e066369f2a7a8a525f3080909ed4ea6b"
 
 [[projects]]
   branch = "master"
@@ -249,6 +353,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9c1d423c16704429c672688bc8f5a61bd69955ee54b4c34871c445f3f32091d3"
+  inputs-digest = "aad48f9ce11eb57a55d4e615093fa71d768aa3d085899bbf509145c20286985a"
   solver-name = "gps-cdcl"
   solver-version = 1
