@@ -45,7 +45,7 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		EndLine:      github.Int(1),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("template: template is required"),
-		Message:      github.String("`(root).spec=map[replicas:asdf]`"),
+		Message:      github.String("map[property:template field:template context:(root).spec]"),
 		RawDetails:   github.String("asdf"),
 	}, {
 		FileName:     github.String("deployment.yaml"),
@@ -54,7 +54,7 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		EndLine:      github.Int(1),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
-		Message:      github.String("`(root).spec.replicas=asdf`"),
+		Message:      github.String("map[expected:integer given:string field:spec.replicas context:(root).spec.replicas]"),
 		RawDetails:   github.String("asdf"),
 	}}
 
