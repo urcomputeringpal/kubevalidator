@@ -22,9 +22,9 @@ func (c *Context) AnnotateFile(bytes *[]byte, file *github.CommitFile) ([]*githu
 				StartLine:    github.Int(1),
 				EndLine:      github.Int(1),
 				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("%s", error.Description())),
-				Message:      github.String(fmt.Sprintf("%s", error)),
-				RawDetails:   github.String(fmt.Sprintf("%#v", error)),
+				Title:        github.String(fmt.Sprintf("%s", error)),
+				Message:      github.String(fmt.Sprintf("`%s=%s`", error.Context().String(), error.Value())),
+				RawDetails:   github.String(fmt.Sprintf("%#v", error.Details())),
 			})
 		}
 	}
