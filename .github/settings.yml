@@ -18,5 +18,6 @@ branches:
         - kubevalidator
         - YAMBURGER
         - Build
+        - WIP
       enforce_admins: true
       restrictions: null
