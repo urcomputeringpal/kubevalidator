@@ -128,7 +128,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			}
 
 			bytes := []byte(contentToValidate)
-			fileAnnotations, err := c.AnnotateFile(&bytes, file)
+			fileAnnotations, err := AnnotateFile(&bytes, file)
 			if err != nil {
 				log.Println(errors.Wrap(err, "Couldn't validate file"))
 				return
