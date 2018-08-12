@@ -76,40 +76,12 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			}
 
 			if file.Schemas == nil {
-				fileAnnotations, err := AnnotateFile(bytes, file.File)
-				if err != nil {
-					annotations = append(annotations, &github.CheckRunAnnotation{
-						FileName:     file.File.Filename,
-						BlobHRef:     file.File.BlobURL,
-						StartLine:    github.Int(1),
-						EndLine:      github.Int(1),
-						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s", *file.File.Filename)),
-						Message:      github.String(fmt.Sprintf("%+v", err)),
-					})
-				}
+				fileAnnotations := AnnotateFile(bytes, file.File)
 				annotations = append(annotations, fileAnnotations...)
 			}
 
 			for _, schema := range file.Schemas {
-				fileAnnotations, err := AnnotateFileWithSchema(bytes, file.File, schema)
-				if err != nil {
-					var schemaName string
-					if schema.Name != "" {
-						schemaName = schema.Name
-					} else {
-						schemaName = fmt.Sprintf("%v", schema)
-					}
-					annotations = append(annotations, &github.CheckRunAnnotation{
-						FileName:     file.File.Filename,
-						BlobHRef:     file.File.BlobURL,
-						StartLine:    github.Int(1),
-						EndLine:      github.Int(1),
-						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s using %s schema", *file.File.Filename, schemaName)),
-						Message:      github.String(fmt.Sprintf("%+v", err)),
-					})
-				}
+				fileAnnotations := AnnotateFileWithSchema(bytes, file.File, schema)
 				annotations = append(annotations, fileAnnotations...)
 			}
 
