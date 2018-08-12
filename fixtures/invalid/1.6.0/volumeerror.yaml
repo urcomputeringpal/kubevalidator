@@ -1,0 +1,4 @@
+apiVersion: v1alpha
+kind: VolumeError
+message: foo
+time: 2017-07-01T16:14:21Z

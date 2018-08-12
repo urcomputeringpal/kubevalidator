@@ -1,23 +1,35 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"path"
 	"time"
 
-	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
 )
+
+// Context contains an event payload an a configured client
+type Context struct {
+	Event  interface{}
+	Github *github.Client
+	Ctx    *context.Context
+}
+
+type schemaMap struct {
+	File    *github.CommitFile
+	Schemas []*KubeValidatorConfigSchema
+}
 
 // Process handles webhook events kinda like Probot does
 func (c *Context) Process() {
-	switch e := c.event.(type) {
+	switch e := c.Event.(type) {
 	case *github.CheckSuiteEvent:
-		c.ProcessCheckSuite(c.event.(*github.CheckSuiteEvent))
+		c.ProcessCheckSuite(c.Event.(*github.CheckSuiteEvent))
 		return
+	// case *github.PullRequestEvent:
+	// TODO Request a check suite when a PR is opened
 	default:
 		log.Printf("ignoring %s\n", e)
 		return
@@ -28,148 +40,86 @@ func (c *Context) Process() {
 // associated with PRs.
 func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 	if *e.Action == "requested" || *e.Action == "re-requested" {
+		createCheckRunErr := c.createInitialCheckRun(e)
+		if createCheckRunErr != nil {
+			// TODO return a 500 to signal that retry is preferred
+			log.Println(errors.Wrap(createCheckRunErr, "Couldn't create check run"))
+			return
+		}
 
-		// Kick off a check run
 		checkRunStart := time.Now()
-		checkRunStatus := "in_progress"
-		checkRunTitle := "kubevalidator"
-		checkRunSummary := "Validating Kubernetes YAML"
-		checkRunOpt := github.CreateCheckRunOptions{
-			Name:       checkRunTitle,
-			HeadBranch: e.CheckSuite.GetHeadBranch(),
-			HeadSHA:    e.CheckSuite.GetHeadSHA(),
-			Status:     &checkRunStatus,
-			StartedAt:  &github.Timestamp{checkRunStart},
-			Output: &github.CheckRunOutput{
-				Title:   &checkRunTitle,
-				Summary: &checkRunSummary,
-			},
-		}
+		var annotations []*github.CheckRunAnnotation
 
-		_, _, checkRunErr := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
-		if checkRunErr != nil {
-			log.Println(errors.Wrap(checkRunErr, "Couldn't create check run"))
+		// Determine which files to validate
+		filesToValidate, configAnnotation, fileSchemaMapError := c.buildFileSchemaMap(e)
+		if fileSchemaMapError != nil {
+			// TODO fail the checkrun instead
+			log.Println(fileSchemaMapError)
 			return
 		}
-
-		// Determine which files to load
-		fileContent, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), "skaffold.yaml", &github.RepositoryContentGetOptions{
-			Ref: e.CheckSuite.GetHeadSHA(),
-		})
-		if err != nil {
-			log.Println(errors.Wrap(err, "Couldn't find skaffold.yaml"))
-			return
+		if configAnnotation != nil {
+			annotations = append(annotations, configAnnotation)
 		}
-
-		content, err := fileContent.GetContent()
-		if err != nil {
-			log.Println(errors.Wrap(err, "Couldn't load contents"))
-			return
-		}
-
-		apiVersion := &skaffold.APIVersion{}
-		err = yaml.Unmarshal([]byte(content), apiVersion)
-		if err != nil {
-			log.Println(errors.Wrap(err, "Couldn't parse api version out of skaffold.yaml"))
-			return
-		}
-
-		if apiVersion.Version != skaffold.LatestVersion {
-			log.Println(errors.New("skaffold.yaml out of date: run `skaffold fix`"))
-			return
-		}
-
-		cfg, err := skaffold.GetConfig([]byte(content), true)
-		if err != nil {
-			log.Println(errors.Wrap(err, "Couldn't parse skaffold.yaml"))
-			return
-		}
-
-		skaffoldConfig := cfg.(*skaffold.SkaffoldConfig)
-
-		if skaffoldConfig.Deploy.DeployType.KubectlDeploy == nil {
-			log.Println(errors.New("Couldn't find kubectl manifests in skaffold.yaml"))
-			return
-		}
-
-		filesToValidate := make(map[string]*github.CommitFile)
-		for _, pr := range e.CheckSuite.PullRequests {
-			files, _, err := c.github.PullRequests.ListFiles(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), pr.GetNumber(), &github.ListOptions{})
-			if err != nil {
-				log.Println(errors.Wrap(err, "Couldn't list files"))
-				return
-			}
-			for _, file := range files {
-				for _, pattern := range skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests {
-					if matched, _ := path.Match(pattern, file.GetFilename()); matched {
-						filesToValidate[file.GetFilename()] = file
-					}
-				}
-			}
-		}
-
-		// TODO Determine which schema to use
 
 		// Validate the files
-		var annotations []*github.CheckRunAnnotation
 		for filename, file := range filesToValidate {
-			fileToValidate, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), filename, &github.RepositoryContentGetOptions{
-				Ref: e.CheckSuite.GetHeadSHA(),
-			})
+			bytes, err := c.bytesForFilename(e, filename)
 			if err != nil {
-				log.Println(errors.Wrap(err, "Couldn't load file"))
-				return
+				annotations = append(annotations, &github.CheckRunAnnotation{
+					FileName:     file.File.Filename,
+					BlobHRef:     file.File.BlobURL,
+					StartLine:    github.Int(1),
+					EndLine:      github.Int(1),
+					WarningLevel: github.String("failure"),
+					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", *file.File.Filename)),
+					Message:      github.String(fmt.Sprintf("%+v", err)),
+				})
 			}
 
-			contentToValidate, err := fileToValidate.GetContent()
-			if err != nil {
-				log.Println(errors.Wrap(err, "Couldn't load contents"))
-				return
+			if file.Schemas == nil {
+				fileAnnotations, err := AnnotateFile(bytes, file.File)
+				if err != nil {
+					annotations = append(annotations, &github.CheckRunAnnotation{
+						FileName:     file.File.Filename,
+						BlobHRef:     file.File.BlobURL,
+						StartLine:    github.Int(1),
+						EndLine:      github.Int(1),
+						WarningLevel: github.String("failure"),
+						Title:        github.String(fmt.Sprintf("Error validating %s", *file.File.Filename)),
+						Message:      github.String(fmt.Sprintf("%+v", err)),
+					})
+				}
+				annotations = append(annotations, fileAnnotations...)
 			}
 
-			bytes := []byte(contentToValidate)
-			fileAnnotations, err := c.AnnotateFile(&bytes, file)
-			if err != nil {
-				log.Println(errors.Wrap(err, "Couldn't validate file"))
-				return
+			for _, schema := range file.Schemas {
+				fileAnnotations, err := AnnotateFileWithSchema(bytes, file.File, schema)
+				if err != nil {
+					var schemaName string
+					if schema.Name != "" {
+						schemaName = schema.Name
+					} else {
+						schemaName = fmt.Sprintf("%v", schema)
+					}
+					annotations = append(annotations, &github.CheckRunAnnotation{
+						FileName:     file.File.Filename,
+						BlobHRef:     file.File.BlobURL,
+						StartLine:    github.Int(1),
+						EndLine:      github.Int(1),
+						WarningLevel: github.String("failure"),
+						Title:        github.String(fmt.Sprintf("Error validating %s using %s schema", *file.File.Filename, schemaName)),
+						Message:      github.String(fmt.Sprintf("%+v", err)),
+					})
+				}
+				annotations = append(annotations, fileAnnotations...)
 			}
-			annotations = append(annotations, fileAnnotations...)
+
 		}
 
 		// Annotate the PR
-		checkRunStatus = "completed"
-		var checkRunConclusion string
-		var checkRunText string
-		if len(filesToValidate) == 0 {
-			checkRunConclusion = "neutral"
-			checkRunText = "no files matched"
-		} else {
-			if len(annotations) > 0 {
-				checkRunConclusion = "failure"
-			} else {
-				checkRunConclusion = "success"
-			}
-			checkRunText = fmt.Sprintf("%d files checked, %d errors", len(filesToValidate), len(annotations))
-		}
-
-		checkRunOpt = github.CreateCheckRunOptions{
-			Name:        checkRunTitle,
-			HeadBranch:  e.CheckSuite.GetHeadBranch(),
-			HeadSHA:     e.CheckSuite.GetHeadSHA(),
-			Status:      &checkRunStatus,
-			Conclusion:  &checkRunConclusion,
-			StartedAt:   &github.Timestamp{checkRunStart},
-			CompletedAt: &github.Timestamp{time.Now()},
-			Output: &github.CheckRunOutput{
-				Title:       &checkRunTitle,
-				Summary:     &checkRunSummary,
-				Text:        &checkRunText,
-				Annotations: annotations,
-			},
-		}
-
-		_, _, finalCheckRunErr := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, len(filesToValidate), annotations)
 		if finalCheckRunErr != nil {
+			// TODO return a 500 to signal that retry is preferred
 			log.Println(errors.Wrap(finalCheckRunErr, "Couldn't create check run"))
 			return
 		}

@@ -11,6 +11,26 @@ import (
 	"github.com/google/go-github/github"
 )
 
+// Server contains the logic to process webhooks, kinda like probot
+type Server struct {
+	Port            int
+	WebhookSecret   string
+	PrivateKeyFile  string
+	AppID           int
+	GitHubAppClient *github.Client
+	tr              *http.RoundTripper
+	ctx             *context.Context
+}
+
+// GenericEvent contains just enough inforamation about webhook to handle
+// authentication
+type GenericEvent struct {
+	// Repo         *github.Repository   `json:"repository,omitempty"`
+	// Org          *github.Organization `json:"organization,omitempty"`
+	// Sender       *github.User         `json:"sender,omitempty"`
+	Installation *github.Installation `json:"installation,omitempty"`
+}
+
 // Run starts a http server on the configured port
 func (s *Server) Run(ctx context.Context) error {
 	s.tr = &http.DefaultTransport
@@ -58,11 +78,12 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := &Context{
-		event:  event,
-		ctx:    s.ctx,
-		github: github.NewClient(&http.Client{Transport: itr}),
+		Event:  event,
+		Ctx:    s.ctx,
+		Github: github.NewClient(&http.Client{Transport: itr}),
 	}
 
+	// TODO Return a 500 if we don't make it through the complete CheckRun cycle
 	c.Process()
 	return
 }
