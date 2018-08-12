@@ -36,8 +36,8 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		StartLine:    github.Int(1),
 		EndLine:      github.Int(1),
 		WarningLevel: github.String("failure"),
-		Title:        github.String("template: template is required"),
-		Message:      github.String("map[property:template field:template context:(root).spec]"),
+		Title:        github.String("Error validating Deployment against master schema"),
+		Message:      github.String("template: template is required"),
 		RawDetails:   github.String("asdf"),
 	}, {
 		FileName:     github.String("deployment.yaml"),
@@ -45,8 +45,8 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		StartLine:    github.Int(1),
 		EndLine:      github.Int(1),
 		WarningLevel: github.String("failure"),
-		Title:        github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
-		Message:      github.String("map[expected:integer given:string field:spec.replicas context:(root).spec.replicas]"),
+		Title:        github.String("Error validating Deployment against master schema"),
+		Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
 		RawDetails:   github.String("asdf"),
 	}}
 
@@ -58,7 +58,9 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		if !reflect.DeepEqual(annotation.Title, want[i].Title) {
 			t.Errorf("[%d]title was %+v, want %+v", i, *annotation.Title, *want[i].Title)
 		}
-
+		if !reflect.DeepEqual(annotation.Message, want[i].Message) {
+			t.Errorf("[%d]message was %+v, want %+v", i, *annotation.Title, *want[i].Title)
+		}
 	}
 }
 
@@ -97,7 +99,7 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 		EndLine:      github.Int(1),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating VolumeError against 1.6.0 schema"),
-		Message:      github.String("Schema file not found! This likely means this type isn't available in configured schema"),
+		Message:      github.String("kubeval encountered an error performing validation."),
 		RawDetails:   github.String("asdf"),
 	}}
 
@@ -109,6 +111,8 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 		if !reflect.DeepEqual(annotation.Title, want[i].Title) {
 			t.Errorf("[%d]title was %+v, want %+v", i, *annotation.Title, *want[i].Title)
 		}
-
+		if !reflect.DeepEqual(annotation.Message, want[i].Message) {
+			t.Errorf("[%d]message was %+v, want %+v", i, *annotation.Message, *want[i].Message)
+		}
 	}
 }
