@@ -28,6 +28,8 @@ func (c *Context) Process() {
 	case *github.CheckSuiteEvent:
 		c.ProcessCheckSuite(c.event.(*github.CheckSuiteEvent))
 		return
+	// case *github.PullRequestEvent:
+	// TODO Request a check suite when a PR is opened
 	default:
 		log.Printf("ignoring %s\n", e)
 		return
