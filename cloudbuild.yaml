@@ -3,6 +3,8 @@ steps:
   args:
   - test
   - ./validator
+  env:
+  - PROJECT_ROOT=/workspace
 - name: gcr.io/cloud-builders/docker
   entrypoint: bash
   args:
