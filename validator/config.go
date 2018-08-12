@@ -3,27 +3,27 @@ package validator
 // KubeValidatorConfig maps globs of Kubernetes config to schemas which validate
 // them.
 type KubeValidatorConfig struct {
-	apiversion string                   `yaml:"apiversion"`
-	kind       string                   `yaml:"kind"`
-	spec       *KubeValidatorConfigSpec `yaml:"spec"`
+	APIVersion string                   `yaml:"apiversion"`
+	Kind       string                   `yaml:"kind"`
+	Spec       *KubeValidatorConfigSpec `yaml:"spec"`
 }
 
 // KubeValidatorConfigSpec contains a list of manifests
 type KubeValidatorConfigSpec struct {
-	manifests []*KubeValidatorConfigManifest `yaml:"manifests"`
+	Manifests []*KubeValidatorConfigManifest `yaml:"manifests"`
 }
 
 // KubeValidatorConfigManifest contains a glob and a list of schema
 type KubeValidatorConfigManifest struct {
-	glob    string                       `yaml:"glob"`
-	schemas []*KubeValidatorConfigSchema `yaml:"schemas,omitempty"`
+	Glob    string                       `yaml:"glob"`
+	Schemas []*KubeValidatorConfigSchema `yaml:"schemas,omitempty"`
 }
 
 // KubeValidatorConfigSchema contains options for kubeval
 type KubeValidatorConfigSchema struct {
 	Name       string `yaml:"name"`
-	version    string `yaml:"version,omitempty"`
-	baseURL    string `yaml:"baseURL,omitempty"`
-	configType string `yaml:"type,omitempty"`
-	strict     bool   `yaml:"strict,omitempty"`
+	Version    string `yaml:"version,omitempty"`
+	BaseURL    string `yaml:"baseURL,omitempty"`
+	ConfigType string `yaml:"type,omitempty"`
+	Strict     bool   `yaml:"strict,omitempty"`
 }

@@ -37,7 +37,7 @@ func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
 		},
 	}
 
-	_, _, err := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+	_, _, err := c.Github.Checks.CreateCheckRun(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
 	if err != nil {
 		log.Println(errors.Wrap(err, "Couldn't create check run"))
 		return err
@@ -80,7 +80,7 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 		},
 	}
 
-	_, _, err := c.github.Checks.CreateCheckRun(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+	_, _, err := c.Github.Checks.CreateCheckRun(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
 	if err != nil {
 		log.Println(errors.Wrap(err, "Couldn't create check run"))
 		return err
@@ -89,7 +89,7 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 }
 
 func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte, error) {
-	fileToValidate, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), f, &github.RepositoryContentGetOptions{
+	fileToValidate, _, _, err := c.Github.Repositories.GetContents(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), f, &github.RepositoryContentGetOptions{
 		Ref: e.CheckSuite.GetHeadSHA(),
 	})
 	if err != nil {
@@ -108,7 +108,7 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*schemaMap, *github.CheckRunAnnotation, error) {
 	skaffoldFilename := "skaffold.yaml"
 	skaffoldBytes, _ := c.bytesForFilename(e, skaffoldFilename)
-	skaffoldBlobHRef := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), skaffoldFilename)
+	skaffoldBlobHRef := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), skaffoldFilename)
 	var skaffoldConfig *skaffold.SkaffoldConfig
 	if skaffoldBytes != nil {
 		apiVersion := &skaffold.APIVersion{}
@@ -156,7 +156,7 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 
 	var configSpec *KubeValidatorConfigSpec
 	configFileName := ".github/kubevalidator.yaml"
-	configBlobHRef := fmt.Sprintf("https://%/%s/%s/blob/%s/%s", c.github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
+	configBlobHRef := fmt.Sprintf("https://%/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
 	configBytes, _ := c.bytesForFilename(e, configFileName)
 	if configBytes != nil {
 		var config *KubeValidatorConfig
@@ -176,18 +176,18 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 
 	filesToValidate := make(map[string]*schemaMap)
 	for _, pr := range e.CheckSuite.PullRequests {
-		files, _, prListErr := c.github.PullRequests.ListFiles(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), pr.GetNumber(), &github.ListOptions{})
+		files, _, prListErr := c.Github.PullRequests.ListFiles(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), pr.GetNumber(), &github.ListOptions{})
 		if prListErr != nil {
 			return nil, nil, errors.Wrap(prListErr, "Couldn't list files")
 		}
 		for _, file := range files {
 
 			if configSpec != nil {
-				for _, manifestConfig := range configSpec.manifests {
-					if matched, _ := path.Match(manifestConfig.glob, file.GetFilename()); matched {
+				for _, manifestConfig := range configSpec.Manifests {
+					if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
 						filesToValidate[file.GetFilename()] = &schemaMap{
-							file:    file,
-							schemas: manifestConfig.schemas,
+							File:    file,
+							Schemas: manifestConfig.Schemas,
 						}
 					}
 				}
@@ -197,7 +197,7 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 			for _, pattern := range skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests {
 				if matched, _ := path.Match(pattern, file.GetFilename()); matched {
 					if filesToValidate[file.GetFilename()] == nil {
-						filesToValidate[file.GetFilename()] = &schemaMap{file: file}
+						filesToValidate[file.GetFilename()] = &schemaMap{File: file}
 					}
 				}
 			}

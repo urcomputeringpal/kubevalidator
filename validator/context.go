@@ -12,21 +12,21 @@ import (
 
 // Context contains an event payload an a configured client
 type Context struct {
-	event  interface{}
-	github *github.Client
-	ctx    *context.Context
+	Event  interface{}
+	Github *github.Client
+	Ctx    *context.Context
 }
 
 type schemaMap struct {
-	file    *github.CommitFile
-	schemas []*KubeValidatorConfigSchema
+	File    *github.CommitFile
+	Schemas []*KubeValidatorConfigSchema
 }
 
 // Process handles webhook events kinda like Probot does
 func (c *Context) Process() {
-	switch e := c.event.(type) {
+	switch e := c.Event.(type) {
 	case *github.CheckSuiteEvent:
-		c.ProcessCheckSuite(c.event.(*github.CheckSuiteEvent))
+		c.ProcessCheckSuite(c.Event.(*github.CheckSuiteEvent))
 		return
 	// case *github.PullRequestEvent:
 	// TODO Request a check suite when a PR is opened
@@ -66,42 +66,42 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			bytes, err := c.bytesForFilename(e, filename)
 			if err != nil {
 				annotations = append(annotations, &github.CheckRunAnnotation{
-					FileName:     file.file.Filename,
-					BlobHRef:     file.file.BlobURL,
+					FileName:     file.File.Filename,
+					BlobHRef:     file.File.BlobURL,
 					StartLine:    github.Int(1),
 					EndLine:      github.Int(1),
 					WarningLevel: github.String("failure"),
-					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", file.file.Filename)),
+					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", file.File.Filename)),
 					Message:      github.String(fmt.Sprintf("%+v", err)),
 				})
 			}
 
-			if file.schemas == nil {
-				fileAnnotations, err := AnnotateFile(bytes, file.file)
+			if file.Schemas == nil {
+				fileAnnotations, err := AnnotateFile(bytes, file.File)
 				if err != nil {
 					annotations = append(annotations, &github.CheckRunAnnotation{
-						FileName:     file.file.Filename,
-						BlobHRef:     file.file.BlobURL,
+						FileName:     file.File.Filename,
+						BlobHRef:     file.File.BlobURL,
 						StartLine:    github.Int(1),
 						EndLine:      github.Int(1),
 						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s", file.file.Filename)),
+						Title:        github.String(fmt.Sprintf("Error validating %s", file.File.Filename)),
 						Message:      github.String(fmt.Sprintf("%+v", err)),
 					})
 				}
 				annotations = append(annotations, fileAnnotations...)
 			}
 
-			for _, schema := range file.schemas {
-				fileAnnotations, err := AnnotateFileWithSchema(bytes, file.file, schema)
+			for _, schema := range file.Schemas {
+				fileAnnotations, err := AnnotateFileWithSchema(bytes, file.File, schema)
 				if err != nil {
 					annotations = append(annotations, &github.CheckRunAnnotation{
-						FileName:     file.file.Filename,
-						BlobHRef:     file.file.BlobURL,
+						FileName:     file.File.Filename,
+						BlobHRef:     file.File.BlobURL,
 						StartLine:    github.Int(1),
 						EndLine:      github.Int(1),
 						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s using schema %s", file.file.Filename, schema.Name)),
+						Title:        github.String(fmt.Sprintf("Error validating %s using schema %s", file.File.Filename, schema.Name)),
 						Message:      github.String(fmt.Sprintf("%+v", err)),
 					})
 				}

@@ -10,10 +10,10 @@ import (
 // AnnotateFile takes bytes and a CommitFile and returns CheckRunAnnotations
 func AnnotateFile(bytes *[]byte, file *github.CommitFile) ([]*github.CheckRunAnnotation, error) {
 	return AnnotateFileWithSchema(bytes, file, &KubeValidatorConfigSchema{
-		version:    "master",
-		baseURL:    "https://raw.githubusercontent.com/garethr",
-		configType: "kubernetes",
-		strict:     false,
+		Version:    "master",
+		BaseURL:    "https://raw.githubusercontent.com/garethr",
+		ConfigType: "kubernetes",
+		Strict:     false,
 	})
 }
 
@@ -21,14 +21,14 @@ func AnnotateFile(bytes *[]byte, file *github.CommitFile) ([]*github.CheckRunAnn
 // KubeValidatorConfigSchema and returns CheckRunAnnotations.
 func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *KubeValidatorConfigSchema) ([]*github.CheckRunAnnotation, error) {
 	var annotations []*github.CheckRunAnnotation
-	if config.version != "" {
-		kubeval.Version = config.version
+	if config.Version != "" {
+		kubeval.Version = config.Version
 	}
-	if config.baseURL != "" {
-		kubeval.SchemaLocation = config.baseURL
+	if config.BaseURL != "" {
+		kubeval.SchemaLocation = config.BaseURL
 	}
-	kubeval.Strict = config.strict
-	if config.configType == "openstack" {
+	kubeval.Strict = config.Strict
+	if config.ConfigType == "openstack" {
 		kubeval.OpenShift = true
 	} else {
 		kubeval.OpenShift = false

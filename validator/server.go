@@ -78,9 +78,9 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := &Context{
-		event:  event,
-		ctx:    s.ctx,
-		github: github.NewClient(&http.Client{Transport: itr}),
+		Event:  event,
+		Ctx:    s.ctx,
+		Github: github.NewClient(&http.Client{Transport: itr}),
 	}
 
 	// TODO Return a 500 if we don't make it through the complete CheckRun cycle

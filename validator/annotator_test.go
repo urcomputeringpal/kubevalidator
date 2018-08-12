@@ -77,7 +77,7 @@ func TestAnnotationsWithCustomSchemaSuccess(t *testing.T) {
 			Filename: github.String("volumeerror.yaml"),
 		},
 		&KubeValidatorConfigSchema{
-			version: "1.10.0",
+			Version: "1.10.0",
 		})
 	if err != nil {
 		t.Errorf("AnnotateFile failed with %s", err)
@@ -97,7 +97,7 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 			Filename: github.String("volumeerror.yaml"),
 		},
 		&KubeValidatorConfigSchema{
-			version: "1.6.0",
+			Version: "1.6.0",
 		})
 	if err != nil {
 		t.Errorf("AnnotateFile failed with %s", err)
