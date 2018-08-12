@@ -71,7 +71,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 					StartLine:    github.Int(1),
 					EndLine:      github.Int(1),
 					WarningLevel: github.String("failure"),
-					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", file.File.Filename)),
+					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", *file.File.Filename)),
 					Message:      github.String(fmt.Sprintf("%+v", err)),
 				})
 			}
@@ -85,7 +85,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 						StartLine:    github.Int(1),
 						EndLine:      github.Int(1),
 						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s", file.File.Filename)),
+						Title:        github.String(fmt.Sprintf("Error validating %s", *file.File.Filename)),
 						Message:      github.String(fmt.Sprintf("%+v", err)),
 					})
 				}
@@ -107,7 +107,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 						StartLine:    github.Int(1),
 						EndLine:      github.Int(1),
 						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s using %s schema", file.File.Filename, schemaName)),
+						Title:        github.String(fmt.Sprintf("Error validating %s using %s schema", *file.File.Filename, schemaName)),
 						Message:      github.String(fmt.Sprintf("%+v", err)),
 					})
 				}

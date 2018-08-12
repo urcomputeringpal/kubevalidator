@@ -154,12 +154,11 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 		skaffoldConfig = cfg.(*skaffold.SkaffoldConfig)
 	}
 
-	var configSpec *KubeValidatorConfigSpec
+	config := &KubeValidatorConfig{}
 	configFileName := ".github/kubevalidator.yaml"
 	configBlobHRef := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
 	configBytes, _ := c.bytesForFilename(e, configFileName)
 	if configBytes != nil {
-		var config *KubeValidatorConfig
 		err := yaml.Unmarshal(*configBytes, config)
 		if err != nil {
 			return nil, &github.CheckRunAnnotation{
@@ -182,8 +181,8 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 		}
 		for _, file := range files {
 
-			if configSpec != nil {
-				for _, manifestConfig := range configSpec.Manifests {
+			if config.Spec != nil {
+				for _, manifestConfig := range config.Spec.Manifests {
 					if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
 						filesToValidate[file.GetFilename()] = &schemaMap{
 							File:    file,
