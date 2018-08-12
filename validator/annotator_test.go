@@ -84,7 +84,7 @@ func TestAnnotationsWithCustomSchemaSuccess(t *testing.T) {
 	}
 
 	if len(checkRunAnnotations) != 0 {
-		t.Errorf("a total of %d annotations were returned, wanted %d", len(checkRunAnnotations), 0)
+		t.Errorf("%d annotations returned, expected 0: %+v", len(checkRunAnnotations), checkRunAnnotations[0].GetTitle())
 	}
 }
 
