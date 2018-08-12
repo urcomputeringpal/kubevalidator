@@ -156,7 +156,7 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 
 	var configSpec *KubeValidatorConfigSpec
 	configFileName := ".github/kubevalidator.yaml"
-	configBlobHRef := fmt.Sprintf("https://%/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
+	configBlobHRef := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
 	configBytes, _ := c.bytesForFilename(e, configFileName)
 	if configBytes != nil {
 		var config *KubeValidatorConfig
