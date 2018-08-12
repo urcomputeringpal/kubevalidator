@@ -15,5 +15,5 @@ type Candidate struct {
 // MarkdownListItem returns a string that represents the Candidate designed for
 // use in a Markdown List
 func (c *Candidate) MarkdownListItem() string {
-	return fmt.Sprintf("* [%s](%s)", c.File.GetFilename(), c.File.GetBlobURL())
+	return fmt.Sprintf("* [`./%s`](%s)", c.File.GetFilename(), c.File.GetBlobURL())
 }
