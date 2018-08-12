@@ -21,7 +21,7 @@ type KubeValidatorConfigManifest struct {
 
 // KubeValidatorConfigSchema contains options for kubeval
 type KubeValidatorConfigSchema struct {
-	Name       string `yaml:"name"`
+	Name       string `yaml:"name,omitempty"`
 	Version    string `yaml:"version,omitempty"`
 	BaseURL    string `yaml:"baseURL,omitempty"`
 	ConfigType string `yaml:"type,omitempty"`

@@ -95,13 +95,19 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			for _, schema := range file.Schemas {
 				fileAnnotations, err := AnnotateFileWithSchema(bytes, file.File, schema)
 				if err != nil {
+					var schemaName string
+					if schema.Name != "" {
+						schemaName = schema.Name
+					} else {
+						schemaName = fmt.Sprintf("%v", schema)
+					}
 					annotations = append(annotations, &github.CheckRunAnnotation{
 						FileName:     file.File.Filename,
 						BlobHRef:     file.File.BlobURL,
 						StartLine:    github.Int(1),
 						EndLine:      github.Int(1),
 						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s using schema %s", file.File.Filename, schema.Name)),
+						Title:        github.String(fmt.Sprintf("Error validating %s using %s schema", file.File.Filename, schemaName)),
 						Message:      github.String(fmt.Sprintf("%+v", err)),
 					})
 				}
