@@ -8,7 +8,7 @@ import (
 )
 
 // AnnotateFile takes bytes and a CommitFile and returns CheckRunAnnotations
-func AnnotateFile(bytes *[]byte, file *github.CommitFile) ([]*github.CheckRunAnnotation, error) {
+func AnnotateFile(bytes *[]byte, file *github.CommitFile) []*github.CheckRunAnnotation {
 	return AnnotateFileWithSchema(bytes, file, &KubeValidatorConfigSchema{
 		Version:    "master",
 		BaseURL:    "https://raw.githubusercontent.com/garethr",
@@ -19,7 +19,7 @@ func AnnotateFile(bytes *[]byte, file *github.CommitFile) ([]*github.CheckRunAnn
 
 // AnnotateFileWithSchema takes bytes, a CommitFile, and a
 // KubeValidatorConfigSchema and returns CheckRunAnnotations.
-func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *KubeValidatorConfigSchema) ([]*github.CheckRunAnnotation, error) {
+func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *KubeValidatorConfigSchema) []*github.CheckRunAnnotation {
 	var annotations []*github.CheckRunAnnotation
 	if config.Version != "" {
 		kubeval.Version = config.Version
@@ -34,6 +34,15 @@ func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *Kube
 		kubeval.OpenShift = false
 	}
 
+	var schemaName string
+	if config.Name != "" {
+		schemaName = config.Name
+	} else if config.Version != "" {
+		schemaName = config.Version
+	} else {
+		schemaName = fmt.Sprintf("%v", config)
+	}
+
 	results, err := kubeval.Validate(*bytes, file.GetFilename())
 	// log.Printf("%+v", results)
 
@@ -44,11 +53,11 @@ func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *Kube
 			StartLine:    github.Int(1),
 			EndLine:      github.Int(1),
 			WarningLevel: github.String("failure"),
-			Title:        github.String(fmt.Sprintf("Error validating %s", results[0].Kind)),
-			Message:      github.String(fmt.Sprintf("%+v", err)),
-			RawDetails:   github.String(fmt.Sprintf("%+v", results)),
+			Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
+			Message:      github.String(fmt.Sprintf("%+v", "kubeval encountered an error performing validation.")),
+			RawDetails:   github.String(fmt.Sprintf("%+v", err)),
 		})
-		return annotations, nil
+		return annotations
 	}
 
 	for _, result := range results {
@@ -59,11 +68,11 @@ func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *Kube
 				StartLine:    github.Int(1),
 				EndLine:      github.Int(1),
 				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("%s", error)),
-				Message:      github.String(fmt.Sprintf("%+v", error.Details())),
-				RawDetails:   github.String(fmt.Sprintf("%s=%s", error.Context().String(), error.Value())),
+				Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
+				Message:      github.String(error.String()),
+				RawDetails:   github.String(fmt.Sprintf("%+v", error.Details())),
 			})
 		}
 	}
-	return annotations, nil
+	return annotations
 }
