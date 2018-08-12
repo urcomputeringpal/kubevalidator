@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"path"
@@ -11,6 +12,13 @@ import (
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
+
+// Context contains an event payload an a configured client
+type Context struct {
+	event  interface{}
+	github *github.Client
+	ctx    *context.Context
+}
 
 // Process handles webhook events kinda like Probot does
 func (c *Context) Process() {
