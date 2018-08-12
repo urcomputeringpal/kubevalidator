@@ -105,44 +105,72 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 	return &bytes, nil
 }
 
-func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*schemaMap, error) {
-	skaffoldBytes, _ := c.bytesForFilename(e, "skaffold.yaml")
-
+func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*schemaMap, *github.CheckRunAnnotation, error) {
+	skaffoldFilename := "skaffold.yaml"
+	skaffoldBytes, _ := c.bytesForFilename(e, skaffoldFilename)
+	skaffoldBlobHRef := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), skaffoldFilename)
 	var skaffoldConfig *skaffold.SkaffoldConfig
 	if skaffoldBytes != nil {
 		apiVersion := &skaffold.APIVersion{}
 		err := yaml.Unmarshal(*skaffoldBytes, apiVersion)
 		if err != nil {
-			// TODO bubble up into check run
-			return nil, errors.Wrap(err, "Couldn't parse api version out of skaffold.yaml")
+			return nil, &github.CheckRunAnnotation{
+				FileName:     &skaffoldFilename,
+				BlobHRef:     &skaffoldBlobHRef,
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
+				WarningLevel: github.String("failure"),
+				Title:        github.String(fmt.Sprintf("Couldn't unmarshal %s", skaffoldFilename)),
+				Message:      github.String(fmt.Sprintf("%+v", err)),
+			}, nil
 		}
 
 		if apiVersion.Version != skaffold.LatestVersion {
 			// TODO bubble up into check run
-			return nil, errors.New("skaffold.yaml out of date: run `skaffold fix`")
+			return nil, &github.CheckRunAnnotation{
+				FileName:     &skaffoldFilename,
+				BlobHRef:     &skaffoldBlobHRef,
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
+				WarningLevel: github.String("failure"),
+				Title:        github.String(fmt.Sprintf("%s out of date", skaffoldFilename)),
+				Message:      github.String("Run 'skaffold fix'"),
+			}, nil
 		}
 
 		cfg, err := skaffold.GetConfig(*skaffoldBytes, true)
 		if err != nil {
-			// TODO bubble up into check run
-			return nil, errors.Wrap(err, "Couldn't parse skaffold.yaml")
+			return nil, &github.CheckRunAnnotation{
+				FileName:     &skaffoldFilename,
+				BlobHRef:     &skaffoldBlobHRef,
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
+				WarningLevel: github.String("failure"),
+				Title:        github.String(fmt.Sprintf("Couldn't parse %s", skaffoldFilename)),
+				Message:      github.String(fmt.Sprintf("%+v", err)),
+			}, nil
 		}
 
 		skaffoldConfig = cfg.(*skaffold.SkaffoldConfig)
-
-		if skaffoldConfig.Deploy.DeployType.KubectlDeploy == nil {
-			// TODO bubble up into check run
-			return nil, errors.New("Couldn't find kubectl manifests in skaffold.yaml")
-		}
 	}
 
 	var configSpec *KubeValidatorConfigSpec
-	configBytes, _ := c.bytesForFilename(e, ".github/kubevalidator.yaml")
+	configFileName := ".github/kubevalidator.yaml"
+	configBlobHRef := fmt.Sprintf("https://%/%s/%s/blob/%s/%s", c.github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
+	configBytes, _ := c.bytesForFilename(e, configFileName)
 	if configBytes != nil {
 		var config *KubeValidatorConfig
 		err := yaml.Unmarshal(*configBytes, config)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Couldn't unmarshal .github/kubevalidator.yaml: %v", err))
+			return nil, &github.CheckRunAnnotation{
+				FileName:     &configFileName,
+				BlobHRef:     &configBlobHRef,
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
+				WarningLevel: github.String("failure"),
+				Title:        github.String(fmt.Sprintf("Couldn't unmarshal %s", configFileName)),
+				Message:      github.String(fmt.Sprintf("%+v", err)),
+			}, nil
 		}
 	}
 
@@ -150,7 +178,7 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 	for _, pr := range e.CheckSuite.PullRequests {
 		files, _, prListErr := c.github.PullRequests.ListFiles(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), pr.GetNumber(), &github.ListOptions{})
 		if prListErr != nil {
-			return nil, errors.Wrap(prListErr, "Couldn't list files")
+			return nil, nil, errors.Wrap(prListErr, "Couldn't list files")
 		}
 		for _, file := range files {
 
@@ -176,5 +204,5 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 		}
 	}
 
-	return filesToValidate, nil
+	return filesToValidate, nil, nil
 }

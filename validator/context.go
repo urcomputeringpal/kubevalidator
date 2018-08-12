@@ -42,21 +42,26 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 	if *e.Action == "requested" || *e.Action == "re-requested" {
 		createCheckRunErr := c.createInitialCheckRun(e)
 		if createCheckRunErr != nil {
+			// TODO return a 500 to signal that retry is preferred
 			log.Println(errors.Wrap(createCheckRunErr, "Couldn't create check run"))
 			return
 		}
 
 		checkRunStart := time.Now()
+		var annotations []*github.CheckRunAnnotation
 
 		// Determine which files to validate
-		filesToValidate, fileSchemaMapError := c.buildFileSchemaMap(e)
+		filesToValidate, configAnnotation, fileSchemaMapError := c.buildFileSchemaMap(e)
 		if fileSchemaMapError != nil {
+			// TODO fail the checkrun instead
 			log.Println(fileSchemaMapError)
 			return
 		}
+		if configAnnotation != nil {
+			annotations = append(annotations, configAnnotation)
+		}
 
 		// Validate the files
-		var annotations []*github.CheckRunAnnotation
 		for filename, file := range filesToValidate {
 			bytes, err := c.bytesForFilename(e, filename)
 			if err != nil {
@@ -89,6 +94,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		// Annotate the PR
 		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, len(filesToValidate), annotations)
 		if finalCheckRunErr != nil {
+			// TODO return a 500 to signal that retry is preferred
 			log.Println(errors.Wrap(finalCheckRunErr, "Couldn't create check run"))
 			return
 		}

@@ -83,6 +83,7 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 		github: github.NewClient(&http.Client{Transport: itr}),
 	}
 
+	// TODO Return a 500 if we don't make it through the complete CheckRun cycle
 	c.Process()
 	return
 }
