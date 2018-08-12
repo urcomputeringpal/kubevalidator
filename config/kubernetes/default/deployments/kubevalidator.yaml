@@ -14,9 +14,11 @@ spec:
       labels:
         app: kubevalidator
     spec:
+      securityContext:
+        runAsUser: 1000
       containers:
         - name: kubevalidator
-          image: gcr.io/rancho-de-newland/kubevalidator
+          image: gcr.io/urcomputeringpal/kubevalidator
           envFrom:
           - secretRef:
               name: kubevalidator

@@ -17,11 +17,6 @@ type Context struct {
 	Ctx    *context.Context
 }
 
-type schemaMap struct {
-	File    *github.CommitFile
-	Schemas []*KubeValidatorConfigSchema
-}
-
 // Process handles webhook events kinda like Probot does
 func (c *Context) Process() {
 	switch e := c.Event.(type) {
@@ -50,16 +45,20 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		checkRunStart := time.Now()
 		var annotations []*github.CheckRunAnnotation
 
-		// Determine which files to validate
-		filesToValidate, configAnnotation, fileSchemaMapError := c.buildFileSchemaMap(e)
-		if fileSchemaMapError != nil {
-			// TODO fail the checkrun instead
-			log.Println(fileSchemaMapError)
-			return
-		}
+		config, configAnnotation := c.kubeValidatorConfigOrAnnotation(e)
 		if configAnnotation != nil {
 			annotations = append(annotations, configAnnotation)
 		}
+
+		// Determine which files to validate
+		changedFileList, fileListError := c.changedFileList(e)
+		if fileListError != nil {
+			// TODO fail the checkrun instead
+			log.Println(fileListError)
+			return
+		}
+
+		filesToValidate := config.matchingCandidates(changedFileList)
 
 		// Validate the files
 		for filename, file := range filesToValidate {
@@ -77,47 +76,19 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			}
 
 			if file.Schemas == nil {
-				fileAnnotations, err := AnnotateFile(bytes, file.File)
-				if err != nil {
-					annotations = append(annotations, &github.CheckRunAnnotation{
-						FileName:     file.File.Filename,
-						BlobHRef:     file.File.BlobURL,
-						StartLine:    github.Int(1),
-						EndLine:      github.Int(1),
-						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s", *file.File.Filename)),
-						Message:      github.String(fmt.Sprintf("%+v", err)),
-					})
-				}
+				fileAnnotations := AnnotateFile(bytes, file.File)
 				annotations = append(annotations, fileAnnotations...)
 			}
 
 			for _, schema := range file.Schemas {
-				fileAnnotations, err := AnnotateFileWithSchema(bytes, file.File, schema)
-				if err != nil {
-					var schemaName string
-					if schema.Name != "" {
-						schemaName = schema.Name
-					} else {
-						schemaName = fmt.Sprintf("%v", schema)
-					}
-					annotations = append(annotations, &github.CheckRunAnnotation{
-						FileName:     file.File.Filename,
-						BlobHRef:     file.File.BlobURL,
-						StartLine:    github.Int(1),
-						EndLine:      github.Int(1),
-						WarningLevel: github.String("failure"),
-						Title:        github.String(fmt.Sprintf("Error validating %s using %s schema", *file.File.Filename, schemaName)),
-						Message:      github.String(fmt.Sprintf("%+v", err)),
-					})
-				}
+				fileAnnotations := AnnotateFileWithSchema(bytes, file.File, schema)
 				annotations = append(annotations, fileAnnotations...)
 			}
 
 		}
 
 		// Annotate the PR
-		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, len(filesToValidate), annotations)
+		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, filesToValidate, annotations)
 		if finalCheckRunErr != nil {
 			// TODO return a 500 to signal that retry is preferred
 			log.Println(errors.Wrap(finalCheckRunErr, "Couldn't create check run"))
