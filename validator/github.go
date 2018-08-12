@@ -13,27 +13,22 @@ import (
 )
 
 const (
-	checkRunTitle   = "kubevalidator"
-	checkRunSummary = "Validating Kubernetes YAML"
+	checkRunName    = "kubevalidator"
+	checkRunSummary = "Validating Kubernetes YAML..."
 )
 
 // createInitialCheckRun contains the logic which sets the title and summary
 // of the check
 func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
-	checkRunStart := time.Now()
-	checkRunStatus := "in_progress"
-
-	crt := checkRunTitle
-	crs := checkRunSummary
 	checkRunOpt := github.CreateCheckRunOptions{
-		Name:       checkRunTitle,
+		Name:       checkRunName,
 		HeadBranch: e.CheckSuite.GetHeadBranch(),
 		HeadSHA:    e.CheckSuite.GetHeadSHA(),
-		Status:     &checkRunStatus,
-		StartedAt:  &github.Timestamp{checkRunStart},
+		Status:     github.String("in_progress"),
+		StartedAt:  &github.Timestamp{time.Now()},
 		Output: &github.CheckRunOutput{
-			Title:   &crt,
-			Summary: &crs,
+			Title:   github.String(checkRunSummary),
+			Summary: github.String(checkRunSummary),
 		},
 	}
 
@@ -47,7 +42,6 @@ func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
 
 // createFinalCheckRun concludes the check run
 func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent, numFiles int, annotations []*github.CheckRunAnnotation) error {
-	checkRunStatus := "completed"
 	var checkRunConclusion string
 	var checkRunText string
 	if numFiles == 0 {
@@ -62,20 +56,17 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 		checkRunText = fmt.Sprintf("%d files checked, %d errors", numFiles, len(annotations))
 	}
 
-	crt := checkRunTitle
-	crs := checkRunSummary
 	checkRunOpt := github.CreateCheckRunOptions{
-		Name:        checkRunTitle,
+		Name:        checkRunName,
 		HeadBranch:  e.CheckSuite.GetHeadBranch(),
 		HeadSHA:     e.CheckSuite.GetHeadSHA(),
-		Status:      &checkRunStatus,
+		Status:      github.String("completed"),
 		Conclusion:  &checkRunConclusion,
 		StartedAt:   &github.Timestamp{*startedAt},
 		CompletedAt: &github.Timestamp{time.Now()},
 		Output: &github.CheckRunOutput{
-			Title:       &crt,
-			Summary:     &crs,
-			Text:        &checkRunText,
+			Title:       &checkRunText,
+			Summary:     github.String("Something more interesting should go here"),
 			Annotations: annotations,
 		},
 	}
