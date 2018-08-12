@@ -17,11 +17,6 @@ type Context struct {
 	Ctx    *context.Context
 }
 
-type schemaMap struct {
-	File    *github.CommitFile
-	Schemas []*KubeValidatorConfigSchema
-}
-
 // Process handles webhook events kinda like Probot does
 func (c *Context) Process() {
 	switch e := c.Event.(type) {
@@ -50,16 +45,20 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		checkRunStart := time.Now()
 		var annotations []*github.CheckRunAnnotation
 
-		// Determine which files to validate
-		filesToValidate, configAnnotation, fileSchemaMapError := c.buildFileSchemaMap(e)
-		if fileSchemaMapError != nil {
-			// TODO fail the checkrun instead
-			log.Println(fileSchemaMapError)
-			return
-		}
+		config, configAnnotation := c.kubeValidatorConfigOrAnnotation(e)
 		if configAnnotation != nil {
 			annotations = append(annotations, configAnnotation)
 		}
+
+		// Determine which files to validate
+		changedFileList, fileListError := c.changedFileList(e)
+		if fileListError != nil {
+			// TODO fail the checkrun instead
+			log.Println(fileListError)
+			return
+		}
+
+		filesToValidate := config.matchingCandidates(changedFileList)
 
 		// Validate the files
 		for filename, file := range filesToValidate {
@@ -117,7 +116,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		}
 
 		// Annotate the PR
-		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, len(filesToValidate), annotations)
+		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, filesToValidate, annotations)
 		if finalCheckRunErr != nil {
 			// TODO return a 500 to signal that retry is preferred
 			log.Println(errors.Wrap(finalCheckRunErr, "Couldn't create check run"))

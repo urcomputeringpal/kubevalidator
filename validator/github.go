@@ -3,10 +3,9 @@ package validator
 import (
 	"fmt"
 	"log"
-	"path"
+	"strings"
 	"time"
 
-	skaffold "github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
@@ -41,9 +40,11 @@ func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
 }
 
 // createFinalCheckRun concludes the check run
-func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent, numFiles int, annotations []*github.CheckRunAnnotation) error {
+func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent, candidates map[string]*Candidate, annotations []*github.CheckRunAnnotation) error {
 	var checkRunConclusion string
 	var checkRunText string
+	var checkRunSummary string
+	numFiles := len(candidates)
 	if numFiles == 0 {
 		checkRunConclusion = "neutral"
 		checkRunText = "no files matched"
@@ -54,6 +55,12 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 			checkRunConclusion = "success"
 		}
 		checkRunText = fmt.Sprintf("%d files checked, %d errors", numFiles, len(annotations))
+
+		var list []string
+		for _, c := range candidates {
+			list = append(list, c.MarkdownListItem())
+		}
+		checkRunSummary = strings.Join(list, "\n")
 	}
 
 	checkRunOpt := github.CreateCheckRunOptions{
@@ -66,7 +73,7 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 		CompletedAt: &github.Timestamp{time.Now()},
 		Output: &github.CheckRunOutput{
 			Title:       &checkRunText,
-			Summary:     github.String("Something more interesting should go here"),
+			Summary:     &checkRunSummary,
 			Annotations: annotations,
 		},
 	}
@@ -96,55 +103,7 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 	return &bytes, nil
 }
 
-func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*schemaMap, *github.CheckRunAnnotation, error) {
-	skaffoldFilename := "skaffold.yaml"
-	skaffoldBytes, _ := c.bytesForFilename(e, skaffoldFilename)
-	skaffoldBlobHRef := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), skaffoldFilename)
-	var skaffoldConfig *skaffold.SkaffoldConfig
-	if skaffoldBytes != nil {
-		apiVersion := &skaffold.APIVersion{}
-		err := yaml.Unmarshal(*skaffoldBytes, apiVersion)
-		if err != nil {
-			return nil, &github.CheckRunAnnotation{
-				FileName:     &skaffoldFilename,
-				BlobHRef:     &skaffoldBlobHRef,
-				StartLine:    github.Int(1),
-				EndLine:      github.Int(1),
-				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("Couldn't unmarshal %s", skaffoldFilename)),
-				Message:      github.String(fmt.Sprintf("%+v", err)),
-			}, nil
-		}
-
-		if apiVersion.Version != skaffold.LatestVersion {
-			// TODO bubble up into check run
-			return nil, &github.CheckRunAnnotation{
-				FileName:     &skaffoldFilename,
-				BlobHRef:     &skaffoldBlobHRef,
-				StartLine:    github.Int(1),
-				EndLine:      github.Int(1),
-				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("%s out of date", skaffoldFilename)),
-				Message:      github.String("Run 'skaffold fix'"),
-			}, nil
-		}
-
-		cfg, err := skaffold.GetConfig(*skaffoldBytes, true)
-		if err != nil {
-			return nil, &github.CheckRunAnnotation{
-				FileName:     &skaffoldFilename,
-				BlobHRef:     &skaffoldBlobHRef,
-				StartLine:    github.Int(1),
-				EndLine:      github.Int(1),
-				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("Couldn't parse %s", skaffoldFilename)),
-				Message:      github.String(fmt.Sprintf("%+v", err)),
-			}, nil
-		}
-
-		skaffoldConfig = cfg.(*skaffold.SkaffoldConfig)
-	}
-
+func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*KubeValidatorConfig, *github.CheckRunAnnotation) {
 	config := &KubeValidatorConfig{}
 	// TODO also support .github/kubevalidator.yml
 	configFileName := ".github/kubevalidator.yaml"
@@ -161,39 +120,20 @@ func (c *Context) buildFileSchemaMap(e *github.CheckSuiteEvent) (map[string]*sch
 				WarningLevel: github.String("failure"),
 				Title:        github.String(fmt.Sprintf("Couldn't unmarshal %s", configFileName)),
 				Message:      github.String(fmt.Sprintf("%+v", err)),
-			}, nil
+			}
 		}
 	}
+	return config, nil
+}
 
-	filesToValidate := make(map[string]*schemaMap)
+func (c *Context) changedFileList(e *github.CheckSuiteEvent) ([]*github.CommitFile, error) {
+	var prFiles []*github.CommitFile
 	for _, pr := range e.CheckSuite.PullRequests {
 		files, _, prListErr := c.Github.PullRequests.ListFiles(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), pr.GetNumber(), &github.ListOptions{})
 		if prListErr != nil {
-			return nil, nil, errors.Wrap(prListErr, "Couldn't list files")
+			return nil, errors.Wrap(prListErr, "Couldn't list files")
 		}
-		for _, file := range files {
-
-			if config.Spec != nil {
-				for _, manifestConfig := range config.Spec.Manifests {
-					if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
-						filesToValidate[file.GetFilename()] = &schemaMap{
-							File:    file,
-							Schemas: manifestConfig.Schemas,
-						}
-					}
-				}
-			}
-
-			// Append files that match skaffold with a default schema
-			for _, pattern := range skaffoldConfig.Deploy.DeployType.KubectlDeploy.Manifests {
-				if matched, _ := path.Match(pattern, file.GetFilename()); matched {
-					if filesToValidate[file.GetFilename()] == nil {
-						filesToValidate[file.GetFilename()] = &schemaMap{File: file}
-					}
-				}
-			}
-		}
+		prFiles = append(prFiles, files...)
 	}
-
-	return filesToValidate, nil, nil
+	return prFiles, nil
 }
