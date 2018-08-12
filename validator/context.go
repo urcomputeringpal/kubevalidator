@@ -60,16 +60,28 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		for filename, file := range filesToValidate {
 			bytes, err := c.bytesForFilename(e, filename)
 			if err != nil {
-				// TODO add an annotation on the file instead
-				log.Println(err)
-				return
+				annotations = append(annotations, &github.CheckRunAnnotation{
+					FileName:     file.file.Filename,
+					BlobHRef:     file.file.BlobURL,
+					StartLine:    github.Int(1),
+					EndLine:      github.Int(1),
+					WarningLevel: github.String("failure"),
+					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", file.file.Filename)),
+					Message:      github.String(fmt.Sprintf("%+v", err)),
+				})
 			}
 
 			fileAnnotations, err := AnnotateFileWithSchema(bytes, file.file, file.schemas[0])
 			if err != nil {
-				// TODO add an annotation on the file instead
-				log.Println(errors.Wrap(err, fmt.Sprintf("Error validating %s", filename)))
-				return
+				annotations = append(annotations, &github.CheckRunAnnotation{
+					FileName:     file.file.Filename,
+					BlobHRef:     file.file.BlobURL,
+					StartLine:    github.Int(1),
+					EndLine:      github.Int(1),
+					WarningLevel: github.String("failure"),
+					Title:        github.String(fmt.Sprintf("Error validating %s", file.file.Filename)),
+					Message:      github.String(fmt.Sprintf("%+v", err)),
+				})
 			}
 			annotations = append(annotations, fileAnnotations...)
 		}
