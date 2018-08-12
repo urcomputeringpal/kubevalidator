@@ -14,6 +14,7 @@ import (
 const (
 	checkRunName    = "kubevalidator"
 	checkRunSummary = "Validating Kubernetes YAML..."
+	configFileName  = ".github/kubevalidator.yaml"
 )
 
 // createInitialCheckRun contains the logic which sets the title and summary
@@ -47,7 +48,9 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 	numFiles := len(candidates)
 	if numFiles == 0 {
 		checkRunConclusion = "neutral"
-		checkRunText = "no files matched"
+		checkRunText = "No files to validate"
+		configURL := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
+		checkRunSummary = fmt.Sprintf("To save CPU resources, kubevalidator only validates changes to files that a) are associated with an open Pull Request and b) match the configuration in [`%s`](%s).", configFileName, configURL)
 	} else {
 		if len(annotations) > 0 {
 			checkRunConclusion = "failure"
@@ -106,14 +109,13 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*KubeValidatorConfig, *github.CheckRunAnnotation) {
 	config := &KubeValidatorConfig{}
 	// TODO also support .github/kubevalidator.yml
-	configFileName := ".github/kubevalidator.yaml"
 	configBlobHRef := fmt.Sprintf("%s/%s/%s/blob/%s/%s", c.Github.BaseURL, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
 	configBytes, _ := c.bytesForFilename(e, configFileName)
 	if configBytes != nil {
 		err := yaml.Unmarshal(*configBytes, config)
 		if err != nil {
 			return nil, &github.CheckRunAnnotation{
-				FileName:     &configFileName,
+				FileName:     github.String(configFileName),
 				BlobHRef:     &configBlobHRef,
 				StartLine:    github.Int(1),
 				EndLine:      github.Int(1),
