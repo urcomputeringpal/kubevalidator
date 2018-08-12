@@ -108,7 +108,29 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			}
 		}
 
-		// TODO Determine which schema to use
+		// Determine which schema to use
+		var schema *KubeValidatorConfigSchema
+		var configSpec *KubeValidatorConfigSpec
+		schemaFile, _, _, err := c.github.Repositories.GetContents(*c.ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), ".github/kubevalidator.yaml", &github.RepositoryContentGetOptions{
+			Ref: e.CheckSuite.GetHeadSHA(),
+		})
+		if err == nil {
+			schema = &KubeValidatorConfigSchema{}
+		} else {
+			schemaContent, err := schemaFile.GetContent()
+			if err != nil {
+				log.Println(errors.Wrap(err, "Couldn't load contents"))
+				return
+			}
+
+			// unmarshal schemaFile into a KubeValidatorConfig and eventually a
+			// KubeValidatorConfigSchema
+			var config *KubeValidatorConfig
+			err = yaml.Unmarshal([]byte(schemaContent), config)
+			if err != nil {
+				log.Fatalf("Couldn't unmarshal .github/kubevalidator.yaml: %v", err)
+			}
+		}
 
 		// Validate the files
 		var annotations []*github.CheckRunAnnotation
@@ -127,8 +149,16 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 				return
 			}
 
+			if schema == nil && configSpec != nil {
+				for _, manifestConfig := range configSpec.manifests {
+					if matched, _ := path.Match(manifestConfig.glob, file.GetFilename()); matched {
+						schema = manifestConfig.schemas[0]
+					}
+				}
+			}
+
 			bytes := []byte(contentToValidate)
-			fileAnnotations, err := AnnotateFile(&bytes, file)
+			fileAnnotations, err := AnnotateFileWithSchema(&bytes, file, schema)
 			if err != nil {
 				log.Println(errors.Wrap(err, "Couldn't validate file"))
 				return
