@@ -9,7 +9,12 @@ repository:
 branches:
   - name: master
     protection:
-      required_pull_request_reviews: null
+      required_pull_request_reviews:
+        require_code_owner_reviews: true
+        dismiss_stale_reviews: true
+        dismissal_restrictions:
+          users:
+          - jnewland
       required_status_checks:
         strict: true
         contexts:
