@@ -1,4 +1,8 @@
 steps:
+- name: 'gcr.io/cloud-builders/go'
+  args:
+  - test
+  - ./validator
 - name: gcr.io/cloud-builders/docker
   entrypoint: bash
   args:
