@@ -16,10 +16,8 @@ func TestAnnotationsForValidFile(t *testing.T) {
 		Filename: github.String("config/kubernetes/default/deployments/kubevalidator.yaml"),
 	})
 
-	var want []*github.CheckRunAnnotation
-
-	if !reflect.DeepEqual(checkRunAnnotations, want) {
-		t.Errorf("AnnotateFile returned %+v, want %+v", checkRunAnnotations, want)
+	if len(checkRunAnnotations) > 0 {
+		t.Errorf("Expected no annotations, got %+v", &checkRunAnnotations[0])
 	}
 }
 
