@@ -1,7 +1,7 @@
 repository:
   description: A GitHub App that uses kubeval to validate all of that Kubernetes YAML in your repo
   topics: github, github-app, kubernetes, yaml, ci
-  private: true
+  private: false
   has_projects: false
   has_wiki: false
   default_branch: master
