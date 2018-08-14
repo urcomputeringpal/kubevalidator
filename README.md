@@ -4,7 +4,7 @@ A GitHub App that validates the Kubernetes YAML in your GitHub PRs using [kubeva
 
 ### Example
 
-https://github.com/urcomputeringpal/kubevalidator/pull/15/checks?check_run_id=11884272
+![example](https://user-images.githubusercontent.com/47/44115902-e577ab0e-9fc3-11e8-9d10-6243a574e8f4.png)
 
 ### Goals
 
