@@ -14,7 +14,7 @@ https://github.com/urcomputeringpal/kubevalidator/pull/15/checks?check_run_id=11
 
 ### Non-goals
 
-* Validate the syntax of your YAML (shameless plug: use [YAMBURGER](https://github.com/urcomputeringpal/yamburger) for that! It's kinda dope!).
+* Validate the syntax of your YAML. (Shameless plug: use [YAMBURGER](https://github.com/urcomputeringpal/yamburger) for that! It's kinda dope!)
 
 ## Getting started
 
