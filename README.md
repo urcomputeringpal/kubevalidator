@@ -2,7 +2,9 @@
 
 A GitHub App that validates the Kubernetes YAML in your GitHub PRs using [kubeval](https://github.com/garethr/kubeval).
 
-> TODO add screenshot
+### Example
+
+https://github.com/urcomputeringpal/kubevalidator/pull/15/checks?check_run_id=11884272
 
 ### Goals
 
