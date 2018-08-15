@@ -26,10 +26,9 @@ func (c *Context) Process() {
 	case *github.PullRequestEvent:
 		prEvent := c.Event.(*github.PullRequestEvent)
 		if *prEvent.Action == "opened" {
-			c.Github.Checks.CreateCheckRun(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), github.CreateCheckRunOptions{
-				Name:       "kubevalidator",
+			c.Github.Checks.CreateCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), github.CreateCheckSuiteOptions{
 				HeadSHA:    prEvent.GetPullRequest().GetHead().GetSHA(),
-				HeadBranch: prEvent.GetPullRequest().GetHead().GetRef(),
+				HeadBranch: github.String(prEvent.GetPullRequest().GetHead().GetRef()),
 			})
 		}
 	default:
