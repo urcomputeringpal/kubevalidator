@@ -4,6 +4,7 @@ metadata:
   name: kubevalidator
   namespace: kubevalidator
 spec:
+  testing1234: bad
   ports:
   - name: ui
     port: 8080
