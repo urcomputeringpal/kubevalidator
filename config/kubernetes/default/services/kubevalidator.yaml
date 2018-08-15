@@ -4,6 +4,7 @@ metadata:
   name: kubevalidator
   namespace: kubevalidator
 spec:
+  gi: go
   ports:
   - name: ui
     port: 8080
