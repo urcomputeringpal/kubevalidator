@@ -26,14 +26,12 @@ func (c *Context) Process() {
 	case *github.PullRequestEvent:
 		prEvent := c.Event.(*github.PullRequestEvent)
 		if *prEvent.Action == "opened" {
-			checkSuite, _, err := c.Github.Checks.CreateCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), github.CreateCheckSuiteOptions{
-				HeadSHA:    prEvent.GetPullRequest().GetHead().GetSHA(),
-				HeadBranch: github.String(prEvent.GetPullRequest().GetHead().GetRef()),
+			_, err := c.Github.Checks.RequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), github.RequestCheckSuiteOptions{
+				HeadSHA: prEvent.GetPullRequest().GetHead().GetSHA(),
 			})
 			if err != nil {
 				log.Printf("%+v\n", err)
 			}
-			log.Printf("created check suite %+v\n", checkSuite)
 		}
 	default:
 		log.Printf("ignoring %s\n", e)
