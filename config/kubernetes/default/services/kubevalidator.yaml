@@ -4,6 +4,7 @@ metadata:
   name: kubevalidator
   namespace: kubevalidator
 spec:
+  adsfasdf: Asdf
   ports:
   - name: ui
     port: 8080
