@@ -69,9 +69,13 @@ These instructions are untested. Please open a new issue or PR if you run into a
   * Webhook URL: Use https://example.com/ for now, we'll come back in a minute to update this with the URL of your deployed app.
   * Webhook Secret: Generate a unique secret with `openssl rand -base64 32` and save it because you'll need it in a minute to configure your deployed app
   * Permissions:
-    * Repository contents
-    * Pull requests
-    * Checks
+    * Checks: Read & Write
+    * Repository contents: Read-only
+    * Repository metadata: Read-only
+    * Pull requests: Read-only
+  * Webhooks:
+    * Check Suite
+    * Pull Request
 * Generate and download a new key for your app. Note the path.
 * Create a secret with values to authenticate your instance of kubevalidator as your GitHub app
 
