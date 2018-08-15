@@ -2,19 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/GoogleContainerTools/skaffold"
-  packages = [
-    "pkg/skaffold/config",
-    "pkg/skaffold/constants",
-    "pkg/skaffold/kubernetes/context",
-    "pkg/skaffold/schema/util",
-    "pkg/skaffold/schema/v1alpha1",
-    "pkg/skaffold/schema/v1alpha2"
-  ]
-  revision = "9c16c5946aef6d952b661bc4bf0a337fd4cb5a4a"
-  version = "v0.11.0"
-
-[[projects]]
   name = "github.com/bradleyfalzon/ghinstallation"
   packages = ["."]
   revision = "3f4e9b1898e6b65e31827d5dccb97d91d59feaa3"
@@ -39,27 +26,6 @@
   version = "0.7.1"
 
 [[projects]]
-  name = "github.com/ghodss/yaml"
-  packages = ["."]
-  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
-  version = "v1.0.0"
-
-[[projects]]
-  name = "github.com/gogo/protobuf"
-  packages = [
-    "proto",
-    "sortkeys"
-  ]
-  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
-  version = "v1.1.1"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
-
-[[projects]]
   branch = "master"
   name = "github.com/google/go-github"
   packages = ["github"]
@@ -70,12 +36,6 @@
   name = "github.com/google/go-querystring"
   packages = ["query"]
   revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/google/gofuzz"
-  packages = ["."]
-  revision = "24818f796faf91cd76ec7bddd72458fbced7a6c1"
 
 [[projects]]
   branch = "master"
@@ -107,18 +67,6 @@
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
-  name = "github.com/imdario/mergo"
-  packages = ["."]
-  revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
-  version = "v0.3.6"
-
-[[projects]]
-  name = "github.com/json-iterator/go"
-  packages = ["."]
-  revision = "ab8a2e0c74be9d3be70b3184d9acc634935ded82"
-  version = "1.1.4"
-
-[[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "c2353362d570a7bfa228149c62842019201cfb71"
@@ -126,27 +74,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/mitchellh/go-homedir"
-  packages = ["."]
-  revision = "58046073cbffe2f25d425fe1331102f55cf719de"
-
-[[projects]]
-  branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
-
-[[projects]]
-  name = "github.com/modern-go/concurrent"
-  packages = ["."]
-  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
-  version = "1.0.3"
-
-[[projects]]
-  name = "github.com/modern-go/reflect2"
-  packages = ["."]
-  revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
-  version = "1.0.1"
 
 [[projects]]
   name = "github.com/pelletier/go-toml"
@@ -159,12 +89,6 @@
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
-
-[[projects]]
-  name = "github.com/sirupsen/logrus"
-  packages = ["."]
-  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
-  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -219,63 +143,22 @@
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
-  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = [
-    "context",
-    "http/httpguts",
-    "http2",
-    "http2/hpack",
-    "idna"
-  ]
-  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
-
-[[projects]]
-  branch = "master"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix"]
   revision = "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe"
 
 [[projects]]
   name = "golang.org/x/text"
   packages = [
-    "collate",
-    "collate/build",
-    "internal/colltab",
     "internal/gen",
-    "internal/tag",
     "internal/triegen",
     "internal/ucd",
-    "language",
-    "secure/bidirule",
     "transform",
-    "unicode/bidi",
     "unicode/cldr",
-    "unicode/norm",
-    "unicode/rangetable"
+    "unicode/norm"
   ]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/time"
-  packages = ["rate"]
-  revision = "fbb02b2291d28baffd63558aa44b4b56f178d650"
-
-[[projects]]
-  name = "gopkg.in/inf.v0"
-  packages = ["."]
-  revision = "d2d2541c53f18d2a059457998ce2876cc8e67cbf"
-  version = "v0.9.1"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -283,76 +166,9 @@
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
 
-[[projects]]
-  branch = "master"
-  name = "k8s.io/apimachinery"
-  packages = [
-    "pkg/api/errors",
-    "pkg/api/resource",
-    "pkg/apis/meta/v1",
-    "pkg/apis/meta/v1/unstructured",
-    "pkg/conversion",
-    "pkg/conversion/queryparams",
-    "pkg/fields",
-    "pkg/labels",
-    "pkg/runtime",
-    "pkg/runtime/schema",
-    "pkg/runtime/serializer",
-    "pkg/runtime/serializer/json",
-    "pkg/runtime/serializer/protobuf",
-    "pkg/runtime/serializer/recognizer",
-    "pkg/runtime/serializer/streaming",
-    "pkg/runtime/serializer/versioning",
-    "pkg/selection",
-    "pkg/types",
-    "pkg/util/clock",
-    "pkg/util/errors",
-    "pkg/util/framer",
-    "pkg/util/intstr",
-    "pkg/util/json",
-    "pkg/util/naming",
-    "pkg/util/net",
-    "pkg/util/runtime",
-    "pkg/util/sets",
-    "pkg/util/validation",
-    "pkg/util/validation/field",
-    "pkg/util/wait",
-    "pkg/util/yaml",
-    "pkg/version",
-    "pkg/watch",
-    "third_party/forked/golang/reflect"
-  ]
-  revision = "cbafd24d5796966031ae904aa88e2436a619ae8a"
-
-[[projects]]
-  branch = "master"
-  name = "k8s.io/client-go"
-  packages = [
-    "pkg/apis/clientauthentication",
-    "pkg/apis/clientauthentication/v1alpha1",
-    "pkg/apis/clientauthentication/v1beta1",
-    "pkg/version",
-    "plugin/pkg/client/auth/exec",
-    "rest",
-    "rest/watch",
-    "tools/auth",
-    "tools/clientcmd",
-    "tools/clientcmd/api",
-    "tools/clientcmd/api/latest",
-    "tools/clientcmd/api/v1",
-    "tools/metrics",
-    "transport",
-    "util/cert",
-    "util/connrotation",
-    "util/flowcontrol",
-    "util/homedir",
-    "util/integer"
-  ]
-  revision = "0b97d57a869d33ee2fe3cc567d0f8553c70357b0"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aad48f9ce11eb57a55d4e615093fa71d768aa3d085899bbf509145c20286985a"
+  inputs-digest = "898df26d456d5384fcee0d211e8b35aa61d66476e3b778a073723fc57caba31d"
   solver-name = "gps-cdcl"
   solver-version = 1
