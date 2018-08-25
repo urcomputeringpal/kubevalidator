@@ -1,0 +1,8 @@
+apiversion: v1alpha
+kind: KubeValidatorConfig
+spec:
+  manifests:
+  - glob: fixtures/*.yaml
+    schemas:
+    - version: 1.10.0
+      strict: true

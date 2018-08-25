@@ -10,10 +10,10 @@ import (
 )
 
 func TestAnnotationsForValidFile(t *testing.T) {
-	filePath, _ := filepath.Abs("../config/kubernetes/default/deployments/kubevalidator.yaml")
+	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	checkRunAnnotations := AnnotateFile(&fileContents, &github.CommitFile{
-		Filename: github.String("config/kubernetes/default/deployments/kubevalidator.yaml"),
+		Filename: github.String("fixtures/deployment.yaml"),
 	})
 
 	if len(checkRunAnnotations) > 0 {
