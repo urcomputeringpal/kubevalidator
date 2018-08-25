@@ -6,7 +6,7 @@ metadata:
   namespace: kubevalidator
 spec:
   extra: field
-  replicas: asdfff
+  replicas: asdffadff
   selector:
     matchLabels:
       app: kubevalidator
