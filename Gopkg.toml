@@ -25,8 +25,9 @@
   unused-packages = true
 
 [[constraint]]
-  branch = "master"
   name = "github.com/google/go-github"
+  source = "github.com/urcomputeringpal/go-github"
+  revision = "f67f03765936eb4a6b08a37ea7565f54e795ea23"
 
 [[override]]
   name = "k8s.io/client-go"
@@ -43,3 +44,7 @@
 [[constraint]]
   name = "github.com/bradleyfalzon/ghinstallation"
   version = "0.1.2"
+
+[[constraint]]
+  name = "github.com/go-test/deep"
+  branch = "master"

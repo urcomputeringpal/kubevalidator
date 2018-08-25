@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	checkRunName    = "kubevalidator"
-	checkRunSummary = "Validating Kubernetes YAML..."
-	configFileName  = ".github/kubevalidator.yaml"
+	checkRunName           = "Kubernetes YAML"
+	initialCheckRunSummary = "Validating..."
+	noMatchingFiles        = "No files to validate"
+	configFileName         = ".github/kubevalidator.yaml"
 )
 
 // createInitialCheckRun contains the logic which sets the title and summary
@@ -25,10 +26,58 @@ func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
 		HeadBranch: e.CheckSuite.GetHeadBranch(),
 		HeadSHA:    e.CheckSuite.GetHeadSHA(),
 		Status:     github.String("in_progress"),
-		StartedAt:  &github.Timestamp{time.Now()},
+		StartedAt:  &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
-			Title:   github.String(checkRunSummary),
-			Summary: github.String(checkRunSummary),
+			Title:   github.String(initialCheckRunSummary),
+			Summary: github.String(initialCheckRunSummary),
+		},
+	}
+
+	_, _, err := c.Github.Checks.CreateCheckRun(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+	if err != nil {
+		log.Println(errors.Wrap(err, "Couldn't create check run"))
+		return err
+	}
+	return nil
+}
+
+func (c *Context) createConfigMissingCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent) error {
+	checkRunOpt := github.CreateCheckRunOptions{
+		Name:        checkRunName,
+		HeadBranch:  e.CheckSuite.GetHeadBranch(),
+		HeadSHA:     e.CheckSuite.GetHeadSHA(),
+		Status:      github.String("completed"),
+		Conclusion:  github.String("neutral"),
+		StartedAt:   &github.Timestamp{Time: *startedAt},
+		CompletedAt: &github.Timestamp{Time: time.Now()},
+		Output: &github.CheckRunOutput{
+			Title:       github.String("No configuration"),
+			Summary:     github.String(fmt.Sprintf("kubevalidator needs a tiny bit of configuration to know where to find the Kubernetes YAML in your Repository.\n\n1. Check out the [documentation and examples](https://github.com/urcomputeringpal/kubevalidator#configuration).\n1. Add your configuration to [`.github/kubevalidator.yaml`](https://github.com/%s/%s/new/%s?filename=.github/kubevalidator.yaml)\n1. Profit???", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadBranch())),
+			Annotations: nil,
+		},
+	}
+
+	_, _, err := c.Github.Checks.CreateCheckRun(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), checkRunOpt)
+	if err != nil {
+		log.Println(errors.Wrap(err, "Couldn't create check run"))
+		return err
+	}
+	return nil
+}
+
+func (c *Context) createConfigInvalidCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent, annotations []*github.CheckRunAnnotation) error {
+	checkRunOpt := github.CreateCheckRunOptions{
+		Name:        checkRunName,
+		HeadBranch:  e.CheckSuite.GetHeadBranch(),
+		HeadSHA:     e.CheckSuite.GetHeadSHA(),
+		Status:      github.String("completed"),
+		Conclusion:  github.String("failure"),
+		StartedAt:   &github.Timestamp{Time: *startedAt},
+		CompletedAt: &github.Timestamp{Time: time.Now()},
+		Output: &github.CheckRunOutput{
+			Title:       github.String("Configuration invalid"),
+			Summary:     github.String(fmt.Sprintf("kubevalidator needs a tiny bit of configuration to know where to find the Kubernetes YAML in your Repository.\n\n1. Check out the [documentation and examples](https://github.com/urcomputeringpal/kubevalidator#configuration).\n1. Add your configuration to [`.github/kubevalidator.yaml`](https://github.com/%s/%s/new/%s?filename=.github/kubevalidator.yaml)\n1. Profit???", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadBranch())),
+			Annotations: annotations,
 		},
 	}
 
@@ -48,16 +97,28 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 	numFiles := len(candidates)
 	if numFiles == 0 {
 		checkRunConclusion = "neutral"
-		checkRunText = "No files to validate"
+		checkRunText = noMatchingFiles
 		configURL := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
 		checkRunSummary = fmt.Sprintf("To save CPU resources, kubevalidator only validates changes to files that a) are associated with an open Pull Request and b) match the configuration in [`%s`](%s).", configFileName, configURL)
 	} else {
+		// MVP pluralization
+		filesString := "files"
+		errorsString := "errors"
+
+		if numFiles == 1 {
+			filesString = "file"
+		}
+
+		if len(annotations) == 1 {
+			errorsString = "error"
+		}
+
 		if len(annotations) > 0 {
 			checkRunConclusion = "failure"
 		} else {
 			checkRunConclusion = "success"
 		}
-		checkRunText = fmt.Sprintf("%d files checked, %d errors", numFiles, len(annotations))
+		checkRunText = fmt.Sprintf("%d %s checked, %d %s", numFiles, filesString, len(annotations), errorsString)
 
 		var list []string
 		for _, c := range candidates {
@@ -72,8 +133,8 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 		HeadSHA:     e.CheckSuite.GetHeadSHA(),
 		Status:      github.String("completed"),
 		Conclusion:  &checkRunConclusion,
-		StartedAt:   &github.Timestamp{*startedAt},
-		CompletedAt: &github.Timestamp{time.Now()},
+		StartedAt:   &github.Timestamp{Time: *startedAt},
+		CompletedAt: &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
 			Title:       &checkRunText,
 			Summary:     &checkRunSummary,
@@ -106,11 +167,14 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 	return &bytes, nil
 }
 
-func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*KubeValidatorConfig, *github.CheckRunAnnotation) {
+func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*KubeValidatorConfig, *github.CheckRunAnnotation, error) {
 	config := &KubeValidatorConfig{}
 	// TODO also support .github/kubevalidator.yml
 	configBlobHRef := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
-	configBytes, _ := c.bytesForFilename(e, configFileName)
+	configBytes, err := c.bytesForFilename(e, configFileName)
+	if err != nil {
+		return nil, nil, err
+	}
 	if configBytes != nil {
 		err := yaml.Unmarshal(*configBytes, config)
 		if err != nil {
@@ -120,12 +184,22 @@ func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*K
 				StartLine:    github.Int(1),
 				EndLine:      github.Int(1),
 				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("Couldn't unmarshal %s", configFileName)),
+				Title:        github.String("Unmarshaling error"),
 				Message:      github.String(fmt.Sprintf("%+v", err)),
-			}
+			}, nil
+		}
+		if !config.Valid() {
+			return nil, &github.CheckRunAnnotation{
+				FileName:     github.String(configFileName),
+				BlobHRef:     &configBlobHRef,
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
+				WarningLevel: github.String("failure"),
+				Message:      github.String("Schema validation error"),
+			}, nil
 		}
 	}
-	return config, nil
+	return config, nil, nil
 }
 
 func (c *Context) changedFileList(e *github.CheckSuiteEvent) ([]*github.CommitFile, error) {

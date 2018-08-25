@@ -1,29 +1,21 @@
 steps:
-- name: 'gcr.io/cloud-builders/go'
-  args:
-  - test
-  - -v
-  - -count=1
-  - ./validator
-  env:
-  - PROJECT_ROOT=/workspace
 - name: gcr.io/cloud-builders/docker
   entrypoint: bash
   args:
   - -xce
-  - docker pull gcr.io/$PROJECT_ID/$REPO_NAME:$BRANCH_NAME || true
+  - docker pull gcr.io/$PROJECT_ID-public/$REPO_NAME:$BRANCH_NAME || true
 - name: gcr.io/cloud-builders/docker
   args:
     - build
     - --pull
     - --cache-from
-    - gcr.io/$PROJECT_ID/$REPO_NAME:$BRANCH_NAME
+    - gcr.io/$PROJECT_ID-public/$REPO_NAME:$BRANCH_NAME
     - -t
-    - gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA
+    - gcr.io/$PROJECT_ID-public/$REPO_NAME:$COMMIT_SHA
     - -t
-    - gcr.io/$PROJECT_ID/$REPO_NAME:$BRANCH_NAME
+    - gcr.io/$PROJECT_ID-public/$REPO_NAME:$BRANCH_NAME
     - .
 images:
-- 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
-- 'gcr.io/$PROJECT_ID/$REPO_NAME:$BRANCH_NAME'
+- gcr.io/$PROJECT_ID-public/$REPO_NAME:$COMMIT_SHA
+- gcr.io/$PROJECT_ID-public/$REPO_NAME:$BRANCH_NAME
 # TODO GC

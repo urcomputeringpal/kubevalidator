@@ -44,7 +44,8 @@ func (s *Server) Run(ctx context.Context) error {
 	s.GitHubAppClient = github.NewClient(&http.Client{Transport: itr})
 
 	http.HandleFunc("/webhook", s.handle)
-	http.HandleFunc("/", s.health)
+	http.HandleFunc("/healthz", s.health)
+	http.HandleFunc("/", s.redirect)
 	log.Println("hi")
 	return http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
 }
@@ -89,5 +90,11 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
+	// TODO better health checks
 	fmt.Fprintf(w, "hi")
+}
+
+func (s *Server) redirect(w http.ResponseWriter, r *http.Request) {
+	// TODO automatically generate this redirect
+	http.Redirect(w, r, "http://github.com/urcomputeringpal/kubevalidator", 301)
 }
