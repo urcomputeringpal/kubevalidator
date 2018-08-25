@@ -17,7 +17,7 @@ func TestAnnotationsForValidFile(t *testing.T) {
 	})
 
 	if len(checkRunAnnotations) > 0 {
-		t.Errorf("Expected no annotations, got %+v", &checkRunAnnotations[0])
+		t.Errorf("Expected no annotations, got %+v", *checkRunAnnotations[0].Message)
 	}
 }
 

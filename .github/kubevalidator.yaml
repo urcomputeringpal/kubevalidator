@@ -5,4 +5,4 @@ spec:
   - glob: config/kubernetes/default/*/*.yaml
     schemas:
     - version: 1.10.0
-    - version: 1.10.1
+      strict: true
