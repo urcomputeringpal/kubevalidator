@@ -163,8 +163,19 @@ func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*K
 				StartLine:    github.Int(1),
 				EndLine:      github.Int(1),
 				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("Couldn't unmarshal %s", configFileName)),
+				Title:        github.String("Unmarshaling error"),
 				Message:      github.String(fmt.Sprintf("%+v", err)),
+			}, nil
+		}
+		if !config.Valid() {
+			return nil, &github.CheckRunAnnotation{
+				FileName:     github.String(configFileName),
+				BlobHRef:     &configBlobHRef,
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
+				WarningLevel: github.String("failure"),
+				Title:        github.String("Schema validation error"),
+				Message:      github.String("Please consult the [documentation and examples](https://github.com/urcomputeringpal/kubevalidator#configuration)."),
 			}, nil
 		}
 	}

@@ -1,7 +1,9 @@
 package validator
 
 import (
+	"fmt"
 	"path"
+	"regexp"
 
 	"github.com/google/go-github/github"
 )
@@ -28,8 +30,9 @@ type KubeValidatorConfigManifest struct {
 // KubeValidatorConfigSchema contains options for kubeval
 type KubeValidatorConfigSchema struct {
 	Name       string `yaml:"name,omitempty"`
+	SchemaFork string `yaml:"schemaFork,omitempty"`
+
 	Version    string `yaml:"version,omitempty"`
-	BaseURL    string `yaml:"baseURL,omitempty"`
 	ConfigType string `yaml:"type,omitempty"`
 	Strict     bool   `yaml:"strict,omitempty"`
 }
@@ -51,4 +54,29 @@ func (config *KubeValidatorConfig) matchingCandidates(files []*github.CommitFile
 	}
 
 	return filesToValidate
+}
+
+// Valid returns a boolean indicatating whether or not the config is well formed
+// TODO replace me with an actual schema
+func (config *KubeValidatorConfig) Valid() bool {
+	re := regexp.MustCompile(`(?mi)^[a-z][a-z\-]{0,38}$`)
+	if config.Spec != nil && config.Spec.Manifests != nil {
+		for _, manifest := range config.Spec.Manifests {
+			for _, schema := range manifest.Schemas {
+				if schema.SchemaFork != "" && !re.MatchString(schema.SchemaFork) {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
+
+// SchemaLocation composes SchemaFork with a base url
+func (schema *KubeValidatorConfigSchema) SchemaLocation() string {
+	schemaFork := schema.SchemaFork
+	if schemaFork == "" {
+		schemaFork = "garethr"
+	}
+	return fmt.Sprintf("https://raw.githubusercontent.com/%s", schemaFork)
 }
