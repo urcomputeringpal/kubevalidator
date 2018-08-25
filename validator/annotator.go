@@ -54,8 +54,7 @@ func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *Kube
 			EndLine:      github.Int(1),
 			WarningLevel: github.String("failure"),
 			Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
-			Message:      github.String(fmt.Sprintf("%+v", "kubeval encountered an error performing validation.")),
-			RawDetails:   github.String(fmt.Sprintf("%+v", err)),
+			Message:      github.String(fmt.Sprintf("%+v", err)),
 		})
 		return annotations
 	}
