@@ -102,22 +102,19 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 		checkRunSummary = fmt.Sprintf("To save CPU resources, kubevalidator only validates changes to files that a) are associated with an open Pull Request and b) match the configuration in [`%s`](%s).", configFileName, configURL)
 	} else {
 		// MVP pluralization
-		var filesString string
-		var errorsString string
+		filesString := "files"
+		errorsString := "errors"
 
-		if numFiles > 1 {
-			filesString = "files"
-		} else {
+		if numFiles == 1 {
 			filesString = "file"
+		}
+
+		if len(annotations) == 1 {
+			errorsString = "error"
 		}
 
 		if len(annotations) > 0 {
 			checkRunConclusion = "failure"
-			if len(annotations) > 1 {
-				errorsString = "errors"
-			} else {
-				errorsString = "error"
-			}
 		} else {
 			checkRunConclusion = "success"
 		}
