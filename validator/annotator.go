@@ -14,7 +14,7 @@ import (
 func AnnotateFile(bytes *[]byte, file *github.CommitFile) []*github.CheckRunAnnotation {
 	return AnnotateFileWithSchema(bytes, file, &KubeValidatorConfigSchema{
 		Version:    "master",
-		BaseURL:    "https://raw.githubusercontent.com/garethr",
+		SchemaFork: "garethr",
 		ConfigType: "kubernetes",
 		Strict:     false,
 	})
@@ -22,28 +22,29 @@ func AnnotateFile(bytes *[]byte, file *github.CommitFile) []*github.CheckRunAnno
 
 // AnnotateFileWithSchema takes bytes, a CommitFile, and a
 // KubeValidatorConfigSchema and returns CheckRunAnnotations.
-func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *KubeValidatorConfigSchema) []*github.CheckRunAnnotation {
+func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, schema *KubeValidatorConfigSchema) []*github.CheckRunAnnotation {
 	var annotations []*github.CheckRunAnnotation
-	if config.Version != "" {
-		kubeval.Version = config.Version
+	kubeval.SchemaLocation = schema.SchemaLocation()
+
+	// TODO move more of this into KubeValidatorConfigSchema
+	if schema.Version != "" {
+		kubeval.Version = schema.Version
 	}
-	if config.BaseURL != "" {
-		kubeval.SchemaLocation = config.BaseURL
-	}
-	kubeval.Strict = config.Strict
-	if config.ConfigType == "openstack" {
+
+	kubeval.Strict = schema.Strict
+	if schema.ConfigType == "openstack" {
 		kubeval.OpenShift = true
 	} else {
 		kubeval.OpenShift = false
 	}
 
 	var schemaName string
-	if config.Name != "" {
-		schemaName = config.Name
-	} else if config.Version != "" {
-		schemaName = config.Version
+	if schema.Name != "" {
+		schemaName = schema.Name
+	} else if schema.Version != "" {
+		schemaName = schema.Version
 	} else {
-		schemaName = fmt.Sprintf("%v", config)
+		schemaName = fmt.Sprintf("%v", schema)
 	}
 
 	results, err := kubeval.Validate(*bytes, file.GetFilename())
