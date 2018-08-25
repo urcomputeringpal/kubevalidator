@@ -18,7 +18,7 @@ spec:
         runAsUser: 1000
       containers:
         - name: kubevalidator
-          image: gcr.io/urcomputeringpal/kubevalidator
+          image: gcr.io/urcomputeringpal-public/kubevalidator
           envFrom:
           - secretRef:
               name: kubevalidator
