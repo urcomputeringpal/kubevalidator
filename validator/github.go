@@ -14,6 +14,7 @@ import (
 const (
 	checkRunName           = "Kubernetes YAML"
 	initialCheckRunSummary = "Validating..."
+	noMatchingFiles        = "No files to validate"
 	configFileName         = ".github/kubevalidator.yaml"
 )
 
@@ -72,7 +73,7 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 	numFiles := len(candidates)
 	if numFiles == 0 {
 		checkRunConclusion = "neutral"
-		checkRunText = "No files to validate"
+		checkRunText = noMatchingFiles
 		configURL := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
 		checkRunSummary = fmt.Sprintf("To save CPU resources, kubevalidator only validates changes to files that a) are associated with an open Pull Request and b) match the configuration in [`%s`](%s).", configFileName, configURL)
 	} else {
