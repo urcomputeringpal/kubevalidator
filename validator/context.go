@@ -53,6 +53,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 
 		checkRunStart := time.Now()
 		var annotations []*github.CheckRunAnnotation
+		var filesToValidate map[string]*Candidate
 
 		config, configAnnotation, err := c.kubeValidatorConfigOrAnnotation(e)
 		if err != nil {
@@ -61,6 +62,8 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		}
 		if configAnnotation != nil {
 			annotations = append(annotations, configAnnotation)
+			c.createConfigInvalidCheckRun(&checkRunStart, e, annotations)
+			return
 		}
 
 		// Determine which files to validate
@@ -71,7 +74,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			return
 		}
 
-		filesToValidate := config.matchingCandidates(changedFileList)
+		filesToValidate = config.matchingCandidates(changedFileList)
 
 		// Validate the files
 		for filename, file := range filesToValidate {

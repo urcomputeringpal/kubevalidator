@@ -9,8 +9,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func TestConfigMatchesCandidates(t *testing.T) {
-	filePath, _ := filepath.Abs("../.github/kubevalidator.yaml")
+func TestValidConfigMatchesCandidates(t *testing.T) {
+	filePath, _ := filepath.Abs("../fixtures/kubevalidator.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	config := &KubeValidatorConfig{}
 	configBytes := []byte(fileContents)
@@ -20,9 +20,14 @@ func TestConfigMatchesCandidates(t *testing.T) {
 		return
 	}
 
+	if !config.Valid() {
+		t.Errorf("Config expected to be valid: %+v", config)
+		return
+	}
+
 	var files []*github.CommitFile
 	files = append(files, &github.CommitFile{
-		Filename: github.String("config/kubernetes/default/deployments/kubevalidator.yaml"),
+		Filename: github.String("fixtures/deployment.yaml"),
 	})
 	files = append(files, &github.CommitFile{
 		Filename: github.String("README.md"),
@@ -43,5 +48,21 @@ func TestEmptyConfigMatchesNothing(t *testing.T) {
 	candidates := config.matchingCandidates(files)
 	if len(candidates) != 0 {
 		t.Errorf("found unexpected candidates! %v", candidates)
+	}
+}
+
+func TestInvalidConfigIsNotValid(t *testing.T) {
+	filePath, _ := filepath.Abs("../fixtures/invalid/kubevalidator/schemaFork.yaml")
+	fileContents, _ := ioutil.ReadFile(filePath)
+	config := &KubeValidatorConfig{}
+	configBytes := []byte(fileContents)
+	err := yaml.Unmarshal(configBytes, config)
+	if err != nil {
+		t.Errorf("Unmarshaling kubevalidator.yaml failed with %v", err)
+		return
+	}
+	if config.Valid() {
+		t.Errorf("Config expected to be invalid: %+v", config)
+		return
 	}
 }

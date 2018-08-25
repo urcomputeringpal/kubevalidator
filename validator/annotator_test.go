@@ -3,17 +3,17 @@ package validator
 import (
 	"io/ioutil"
 	"path/filepath"
-	"reflect"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/google/go-github/github"
 )
 
 func TestAnnotationsForValidFile(t *testing.T) {
-	filePath, _ := filepath.Abs("../config/kubernetes/default/deployments/kubevalidator.yaml")
+	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	checkRunAnnotations := AnnotateFile(&fileContents, &github.CommitFile{
-		Filename: github.String("config/kubernetes/default/deployments/kubevalidator.yaml"),
+		Filename: github.String("fixtures/deployment.yaml"),
 	})
 
 	if len(checkRunAnnotations) > 0 {
@@ -36,7 +36,7 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("template: template is required"),
-		RawDetails:   github.String("asdf"),
+		RawDetails:   github.String("* context: (root).spec\n* field: template\n* property: template\n"),
 	}, {
 		FileName:     github.String("deployment.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
@@ -45,7 +45,7 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
-		RawDetails:   github.String("asdf"),
+		RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 	}}
 
 	if len(checkRunAnnotations) != len(want) {
@@ -53,11 +53,8 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 	}
 
 	for i, annotation := range checkRunAnnotations {
-		if !reflect.DeepEqual(annotation.Title, want[i].Title) {
-			t.Errorf("[%d]title was %+v, want %+v", i, *annotation.Title, *want[i].Title)
-		}
-		if !reflect.DeepEqual(annotation.Message, want[i].Message) {
-			t.Errorf("[%d]message was %+v, want %+v", i, *annotation.Title, *want[i].Title)
+		if diff := deep.Equal(annotation, want[i]); diff != nil {
+			t.Error(diff)
 		}
 	}
 }
@@ -91,14 +88,13 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 			Version: "1.6.0",
 		})
 	want := []*github.CheckRunAnnotation{{
-		FileName:     github.String("deployment.yaml"),
-		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volume_attachment_list.yaml"),
+		FileName:     github.String("volumeerror.yaml"),
+		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
 		StartLine:    github.Int(1),
 		EndLine:      github.Int(1),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating VolumeError against 1.6.0 schema"),
 		Message:      github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
-		RawDetails:   github.String("asdf"),
 	}}
 
 	if len(checkRunAnnotations) != len(want) {
@@ -106,11 +102,8 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 	}
 
 	for i, annotation := range checkRunAnnotations {
-		if !reflect.DeepEqual(annotation.Title, want[i].Title) {
-			t.Errorf("[%d]title was %+v, want %+v", i, *annotation.Title, *want[i].Title)
-		}
-		if !reflect.DeepEqual(annotation.Message, want[i].Message) {
-			t.Errorf("[%d]message was %+v, want %+v", i, *annotation.Message, *want[i].Message)
+		if diff := deep.Equal(annotation, want[i]); diff != nil {
+			t.Error(diff)
 		}
 	}
 }
