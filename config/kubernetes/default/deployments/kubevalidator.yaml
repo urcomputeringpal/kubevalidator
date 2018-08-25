@@ -5,6 +5,7 @@ metadata:
   name: kubevalidator
   namespace: kubevalidator
 spec:
+  blah: blah
   extra: field
   replicas: asdfff
   selector:
