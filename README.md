@@ -60,7 +60,7 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 
 ## Deploying your own instance
 
-These instructions are untested. Please open a new issue or PR if you run into any problems or your prefer to use another deployment tool.
+These instructions are untested. Please open a new issue or PR if you run into any problems or would prefer to use another deployment tool!
 
 * Fork & clone this repo.
 * Edit or delete the included [Ingress](./config/kubernetes/default/ingresses/kubevalidator.yaml) and/or [Service](./config/kubernetes/default/ingresses/kubevalidator.yaml) resources to match your target cluster's load balancing requirements.
