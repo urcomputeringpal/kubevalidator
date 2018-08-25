@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	checkRunName    = "kubevalidator"
-	checkRunSummary = "Validating Kubernetes YAML..."
-	configFileName  = ".github/kubevalidator.yaml"
+	checkRunName           = "Kubernetes YAML"
+	initialCheckRunSummary = "Validating..."
+	configFileName         = ".github/kubevalidator.yaml"
 )
 
 // createInitialCheckRun contains the logic which sets the title and summary
@@ -27,8 +27,8 @@ func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
 		Status:     github.String("in_progress"),
 		StartedAt:  &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
-			Title:   github.String(checkRunSummary),
-			Summary: github.String(checkRunSummary),
+			Title:   github.String(initialCheckRunSummary),
+			Summary: github.String(initialCheckRunSummary),
 		},
 	}
 
