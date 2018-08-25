@@ -45,7 +45,7 @@ spec:
     # don't work for you, fork it and drop your username here! Your schemas
     # will be used instead.
     #
-    # baseURL: https://raw.githubusercontent.com/garethr
+    # schemaFork: garethr
 
     # Set this to openshift to use schemas from
     # https://github.com/garethr/openshift-json-schema instead.
