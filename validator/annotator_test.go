@@ -3,9 +3,9 @@ package validator
 import (
 	"io/ioutil"
 	"path/filepath"
-	"reflect"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/google/go-github/github"
 )
 
@@ -53,11 +53,8 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 	}
 
 	for i, annotation := range checkRunAnnotations {
-		if !reflect.DeepEqual(annotation.Title, want[i].Title) {
-			t.Errorf("[%d]title was %+v, want %+v", i, *annotation.Title, *want[i].Title)
-		}
-		if !reflect.DeepEqual(annotation.Message, want[i].Message) {
-			t.Errorf("[%d]message was %+v, want %+v", i, *annotation.Title, *want[i].Title)
+		if diff := deep.Equal(annotation, want[i]); diff != nil {
+			t.Error(diff)
 		}
 	}
 }
@@ -106,11 +103,8 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 	}
 
 	for i, annotation := range checkRunAnnotations {
-		if !reflect.DeepEqual(annotation.Title, want[i].Title) {
-			t.Errorf("[%d]title was %+v, want %+v", i, *annotation.Title, *want[i].Title)
-		}
-		if !reflect.DeepEqual(annotation.Message, want[i].Message) {
-			t.Errorf("[%d]message was %+v, want %+v", i, *annotation.Message, *want[i].Message)
+		if diff := deep.Equal(annotation, want[i]); diff != nil {
+			t.Error(diff)
 		}
 	}
 }
