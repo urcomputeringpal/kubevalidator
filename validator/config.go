@@ -41,8 +41,9 @@ func (config *KubeValidatorConfig) matchingCandidates(files []*github.CommitFile
 	filesToValidate := make(map[string]*Candidate)
 
 	for _, file := range files {
-		if config.Spec != nil && config.Spec.Manifests != nil {
-			for _, manifestConfig := range config.Spec.Manifests {
+		if config.Spec != nil {
+			spec := *config.Spec
+			for _, manifestConfig := range spec.Manifests {
 				if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
 					filesToValidate[file.GetFilename()] = &Candidate{
 						File:    file,
@@ -60,8 +61,9 @@ func (config *KubeValidatorConfig) matchingCandidates(files []*github.CommitFile
 // TODO replace me with an actual schema
 func (config *KubeValidatorConfig) Valid() bool {
 	re := regexp.MustCompile(`(?mi)^[a-z][a-z\-]{0,38}$`)
-	if config.Spec != nil && config.Spec.Manifests != nil {
-		for _, manifest := range config.Spec.Manifests {
+	if config.Spec != nil {
+		spec := *config.Spec
+		for _, manifest := range spec.Manifests {
 			for _, schema := range manifest.Schemas {
 				if schema.SchemaFork != "" && !re.MatchString(schema.SchemaFork) {
 					return false
