@@ -88,14 +88,13 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 			Version: "1.6.0",
 		})
 	want := []*github.CheckRunAnnotation{{
-		FileName:     github.String("deployment.yaml"),
-		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volume_attachment_list.yaml"),
+		FileName:     github.String("volumeerror.yaml"),
+		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
 		StartLine:    github.Int(1),
 		EndLine:      github.Int(1),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating VolumeError against 1.6.0 schema"),
 		Message:      github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
-		RawDetails:   github.String("asdf"),
 	}}
 
 	if len(checkRunAnnotations) != len(want) {
