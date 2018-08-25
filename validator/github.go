@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	checkRunName    = "kubevalidator"
-	checkRunSummary = "Validating Kubernetes YAML..."
-	configFileName  = ".github/kubevalidator.yaml"
+	checkRunName           = "Kubernetes YAML"
+	initialCheckRunSummary = "Validating..."
+	noMatchingFiles        = "No files to validate"
+	configFileName         = ".github/kubevalidator.yaml"
 )
 
 // createInitialCheckRun contains the logic which sets the title and summary
@@ -27,8 +28,8 @@ func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
 		Status:     github.String("in_progress"),
 		StartedAt:  &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
-			Title:   github.String(checkRunSummary),
-			Summary: github.String(checkRunSummary),
+			Title:   github.String(initialCheckRunSummary),
+			Summary: github.String(initialCheckRunSummary),
 		},
 	}
 
@@ -72,16 +73,31 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 	numFiles := len(candidates)
 	if numFiles == 0 {
 		checkRunConclusion = "neutral"
-		checkRunText = "No files to validate"
+		checkRunText = noMatchingFiles
 		configURL := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configFileName)
 		checkRunSummary = fmt.Sprintf("To save CPU resources, kubevalidator only validates changes to files that a) are associated with an open Pull Request and b) match the configuration in [`%s`](%s).", configFileName, configURL)
 	} else {
+		// MVP pluralization
+		var filesString string
+		var errorsString string
+
+		if numFiles > 1 {
+			filesString = "files"
+		} else {
+			filesString = "file"
+		}
+
 		if len(annotations) > 0 {
 			checkRunConclusion = "failure"
+			if len(annotations) > 1 {
+				errorsString = "errors"
+			} else {
+				errorsString = "error"
+			}
 		} else {
 			checkRunConclusion = "success"
 		}
-		checkRunText = fmt.Sprintf("%d files checked, %d errors", numFiles, len(annotations))
+		checkRunText = fmt.Sprintf("%d %s checked, %d %s", numFiles, filesString, len(annotations), errorsString)
 
 		var list []string
 		for _, c := range candidates {

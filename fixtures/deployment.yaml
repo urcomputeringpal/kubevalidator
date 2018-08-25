@@ -1,0 +1,37 @@
+# test123
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubevalidator
+  namespace: kubevalidator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubevalidator
+  template:
+    metadata:
+      labels:
+        app: kubevalidator
+    spec:
+      securityContext:
+        runAsUser: 1000
+      containers:
+        - name: kubevalidator
+          image: gcr.io/urcomputeringpal/kubevalidator
+          envFrom:
+          - secretRef:
+              name: kubevalidator
+          volumeMounts:
+          - mountPath: /config
+            name: config
+          env:
+          - name: PRIVATE_KEY_FILE
+            value: /config/key.pem
+      volumes:
+      - name: config
+        secret:
+          secretName: kubevalidator
+          items:
+          - key: PRIVATE_KEY
+            path: key.pem

@@ -4,6 +4,7 @@ WORKDIR /go/src/github.com/urcomputeringpal/kubevalidator
 COPY ./vendor ./vendor
 RUN go install -v ./vendor/...
 COPY . .
+RUN go test -v github.com/urcomputeringpal/kubevalidator/...
 RUN go install -v github.com/urcomputeringpal/kubevalidator
 
 

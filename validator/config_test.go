@@ -10,7 +10,7 @@ import (
 )
 
 func TestConfigMatchesCandidates(t *testing.T) {
-	filePath, _ := filepath.Abs("../.github/kubevalidator.yaml")
+	filePath, _ := filepath.Abs("../fixtures/kubevalidator.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	config := &KubeValidatorConfig{}
 	configBytes := []byte(fileContents)
@@ -22,7 +22,7 @@ func TestConfigMatchesCandidates(t *testing.T) {
 
 	var files []*github.CommitFile
 	files = append(files, &github.CommitFile{
-		Filename: github.String("config/kubernetes/default/deployments/kubevalidator.yaml"),
+		Filename: github.String("fixtures/deployment.yaml"),
 	})
 	files = append(files, &github.CommitFile{
 		Filename: github.String("README.md"),

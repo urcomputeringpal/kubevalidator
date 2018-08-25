@@ -1,12 +1,4 @@
 steps:
-- name: 'gcr.io/cloud-builders/go'
-  args:
-  - test
-  - -v
-  - -count=1
-  - ./validator
-  env:
-  - PROJECT_ROOT=/workspace
 - name: gcr.io/cloud-builders/docker
   entrypoint: bash
   args:

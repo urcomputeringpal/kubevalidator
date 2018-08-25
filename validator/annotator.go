@@ -1,10 +1,13 @@
 package validator
 
 import (
+	"bytes"
 	"fmt"
+	"sort"
 
 	"github.com/garethr/kubeval/kubeval"
 	"github.com/google/go-github/github"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // AnnotateFile takes bytes and a CommitFile and returns CheckRunAnnotations
@@ -69,9 +72,24 @@ func AnnotateFileWithSchema(bytes *[]byte, file *github.CommitFile, config *Kube
 				WarningLevel: github.String("failure"),
 				Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
 				Message:      github.String(error.String()),
-				RawDetails:   github.String(fmt.Sprintf("%+v", error.Details())),
+				RawDetails:   github.String(resultErrorDetailString(error)),
 			})
 		}
 	}
 	return annotations
+}
+
+func resultErrorDetailString(e gojsonschema.ResultError) string {
+	details := e.Details()
+	var buffer bytes.Buffer
+	keys := make([]string, 0, len(details))
+	for k := range details {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		buffer.WriteString(fmt.Sprintf("* %s: %s\n", k, details[k]))
+	}
+
+	return buffer.String()
 }
