@@ -71,7 +71,10 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			return
 		}
 
-		filesToValidate := config.matchingCandidates(changedFileList)
+		var filesToValidate map[string]*Candidate
+		if config.Valid() {
+			filesToValidate = config.matchingCandidates(changedFileList)
+		}
 
 		// Validate the files
 		for filename, file := range filesToValidate {
