@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -34,7 +35,7 @@ func (c *Context) Process() {
 			}
 		}
 	default:
-		log.Printf("ignoring %s\n", e)
+		log.Printf("ignoring %s\n", reflect.TypeOf(e).String())
 		return
 	}
 }
