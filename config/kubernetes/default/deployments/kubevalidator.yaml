@@ -20,6 +20,7 @@ spec:
       containers:
         - name: kubevalidator
           image: gcr.io/urcomputeringpal-public/kubevalidator
+          extra: container-field
           envFrom:
           - secretRef:
               name: kubevalidator
