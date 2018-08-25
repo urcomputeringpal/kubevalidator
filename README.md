@@ -95,6 +95,6 @@ kubectl create secret generic kubeval
 
 ## Acknowledgements
 
-* :bow: to @keavy et al for your work on the [GitHub Checks API](https://developer.github.com/v3/checks/). PRs aren't ever going to be the same.
+* :bow: to @keavy, @kytrinyx, @lizzhale and many more for your work on [GitHub Checks](https://developer.github.com/v3/checks/). PRs aren't ever going to be the same.
 * :bow: to @garethr for your work on [kubeval](https://github.com/garethr/kubeval). It does all of the heavy lifting here, I've just put some GitHub-flavored window dressing on top.
 * :bow: to @bkeepers for your work on [Probot](http://probot.github.io/). I've learned a ton building Probot apps in the past few months, and hope that you don't mind that I've poorly re-implemented a small portion of it in Golang in this project. :wink:
