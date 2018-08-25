@@ -50,8 +50,8 @@ func (c *Context) createConfigMissingCheckRun(startedAt *time.Time, e *github.Ch
 		StartedAt:   &github.Timestamp{Time: *startedAt},
 		CompletedAt: &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
-			Title:       github.String("Missing configuration"),
-			Summary:     github.String(fmt.Sprintf("## Missing configuration\n\nkubevalidator needs a configuration file to know where in your repository to look for Kubernetes YAML.\n\n1. View [documentation and examples](https://github.com/urcomputeringpal/kubevalidator).\n1. Add configuration to [`.github/kubevalidator.yaml`](https://github.com/%s/%s/new/%s?filename=.github/kubevalidator.yaml)\n1. Profit???", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadBranch())),
+			Title:       github.String("No configuration"),
+			Summary:     github.String(fmt.Sprintf("kubevalidator needs a tiny bit of configuration to know where to find the Kubernetes YAML in your Repository.\n\n1. Check out the [documentation and examples](https://github.com/urcomputeringpal/kubevalidator#configuration).\n1. Add your configuration to [`.github/kubevalidator.yaml`](https://github.com/%s/%s/new/%s?filename=.github/kubevalidator.yaml)\n1. Profit???", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadBranch())),
 			Annotations: nil,
 		},
 	}
