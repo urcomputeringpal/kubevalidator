@@ -25,7 +25,7 @@ func (c *Context) createInitialCheckRun(e *github.CheckSuiteEvent) error {
 		HeadBranch: e.CheckSuite.GetHeadBranch(),
 		HeadSHA:    e.CheckSuite.GetHeadSHA(),
 		Status:     github.String("in_progress"),
-		StartedAt:  &github.Timestamp{time.Now()},
+		StartedAt:  &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
 			Title:   github.String(checkRunSummary),
 			Summary: github.String(checkRunSummary),
@@ -72,8 +72,8 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 		HeadSHA:     e.CheckSuite.GetHeadSHA(),
 		Status:      github.String("completed"),
 		Conclusion:  &checkRunConclusion,
-		StartedAt:   &github.Timestamp{*startedAt},
-		CompletedAt: &github.Timestamp{time.Now()},
+		StartedAt:   &github.Timestamp{Time: *startedAt},
+		CompletedAt: &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
 			Title:       &checkRunText,
 			Summary:     &checkRunSummary,
