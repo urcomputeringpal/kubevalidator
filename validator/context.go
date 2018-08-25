@@ -53,7 +53,11 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		checkRunStart := time.Now()
 		var annotations []*github.CheckRunAnnotation
 
-		config, configAnnotation := c.kubeValidatorConfigOrAnnotation(e)
+		config, configAnnotation, err := c.kubeValidatorConfigOrAnnotation(e)
+		if err != nil {
+			c.createConfigMissingCheckRun(&checkRunStart, e)
+			return
+		}
 		if configAnnotation != nil {
 			annotations = append(annotations, configAnnotation)
 		}
