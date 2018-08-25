@@ -36,7 +36,7 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("template: template is required"),
-		RawDetails:   github.String("asdf"),
+		RawDetails:   github.String("* context: (root).spec\n* field: template\n* property: template\n"),
 	}, {
 		FileName:     github.String("deployment.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
@@ -45,7 +45,7 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
-		RawDetails:   github.String("asdf"),
+		RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 	}}
 
 	if len(checkRunAnnotations) != len(want) {
