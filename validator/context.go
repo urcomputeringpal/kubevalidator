@@ -23,8 +23,16 @@ func (c *Context) Process() {
 	case *github.CheckSuiteEvent:
 		c.ProcessCheckSuite(c.Event.(*github.CheckSuiteEvent))
 		return
-	// case *github.PullRequestEvent:
-	// TODO Request a check suite when a PR is opened
+	case *github.PullRequestEvent:
+		prEvent := c.Event.(*github.PullRequestEvent)
+		if *prEvent.Action == "opened" {
+			_, err := c.Github.Checks.RequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), github.RequestCheckSuiteOptions{
+				HeadSHA: prEvent.GetPullRequest().GetHead().GetSHA(),
+			})
+			if err != nil {
+				log.Printf("%+v\n", err)
+			}
+		}
 	default:
 		log.Printf("ignoring %s\n", e)
 		return
@@ -34,7 +42,7 @@ func (c *Context) Process() {
 // ProcessCheckSuite validates the Kubernetes YAML that has changed on checks
 // associated with PRs.
 func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
-	if *e.Action == "requested" || *e.Action == "re-requested" {
+	if *e.Action == "created" || *e.Action == "requested" || *e.Action == "rerequested" {
 		createCheckRunErr := c.createInitialCheckRun(e)
 		if createCheckRunErr != nil {
 			// TODO return a 500 to signal that retry is preferred
