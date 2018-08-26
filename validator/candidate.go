@@ -105,6 +105,19 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 			schemaName = fmt.Sprintf("%v", schema)
 		}
 
+		if c.bytes == nil {
+			annotations = append(annotations, &github.CheckRunAnnotation{
+				FileName:     c.file.Filename,
+				BlobHRef:     c.file.BlobURL,
+				StartLine:    github.Int(1),
+				EndLine:      github.Int(1),
+				WarningLevel: github.String("failure"),
+				Title:        github.String("Candidate has no bytes?"),
+				Message:      github.String(fmt.Sprintf("%+v", c)),
+			})
+			continue
+		}
+
 		results, err := kubeval.Validate(*c.bytes, c.file.GetFilename())
 
 		if err != nil {
