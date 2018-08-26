@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 
@@ -68,7 +69,10 @@ func (c *Candidate) LoadBytes() *github.CheckRunAnnotation {
 		}
 	}
 
+	log.Printf("c.bytes: %T, %p", c.bytes, c.bytes)
+	log.Printf("bytes: %T, %p", b, b)
 	c.bytes = b
+	log.Printf("c.bytes: %T, %p", c.bytes, c.bytes)
 	return nil
 }
 
