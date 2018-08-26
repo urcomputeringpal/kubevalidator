@@ -48,14 +48,14 @@ func NewCandidate(context *Context, file *github.CommitFile, schemas []*KubeVali
 	}
 }
 
-func (c *Candidate) setBytes(bytes *[]byte) {
-	c.bytes = bytes
+func (c *Candidate) setBytes(b *[]byte) {
+	c.bytes = b
 }
 
 // LoadBytes hydrates bytes from GitHub and returns a CheckRunAnnotation if
 // an error is encountered
 func (c *Candidate) LoadBytes() *github.CheckRunAnnotation {
-	bytes, err := c.context.bytesForFilename(c.context.Event.(*github.CheckSuiteEvent), c.file.GetFilename())
+	b, err := c.context.bytesForFilename(c.context.Event.(*github.CheckSuiteEvent), c.file.GetFilename())
 	if err != nil {
 		return &github.CheckRunAnnotation{
 			FileName:     c.file.Filename,
@@ -68,7 +68,7 @@ func (c *Candidate) LoadBytes() *github.CheckRunAnnotation {
 		}
 	}
 
-	c.bytes = bytes
+	c.bytes = b
 	return nil
 }
 
