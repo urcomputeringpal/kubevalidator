@@ -11,3 +11,4 @@ spec:
     schemas:
     - version: 1.10.0
       strict: true
+      lineNumbers: true

@@ -137,12 +137,14 @@ func (c *Candidate) Validate() Annotations {
 
 		for _, result := range results {
 			for _, error := range result.Errors {
-				var startLine int
-				var endLine int
-				switch error.Type() {
-				default:
-					fmt.Println(error.Type())
-					startLine, endLine = detectLineNumbersDefault(c.bytes, error)
+				startLine := 1
+				endLine := 1
+				if schema.LineNumbers == true {
+					switch error.Type() {
+					default:
+						// fmt.Println(error.Type())
+						startLine, endLine = detectLineNumbersDefault(c.bytes, error)
+					}
 				}
 
 				annotations = append(annotations, &github.CheckRunAnnotation{

@@ -48,25 +48,28 @@ func TestAnnotationsForInvalidCandidates(t *testing.T) {
 
 	annotations := candidates.Validate()
 
-	want := []*github.CheckRunAnnotation{{
-		FileName:     github.String("deployment.yaml"),
-		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-		StartLine:    github.Int(6),
-		EndLine:      github.Int(7),
-		WarningLevel: github.String("failure"),
-		Title:        github.String("Error validating Deployment against master schema"),
-		Message:      github.String("template: template is required"),
-		RawDetails:   github.String("* context: (root).spec\n* field: template\n* property: template\n"),
-	}, {
-		FileName:     github.String("deployment.yaml"),
-		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-		StartLine:    github.Int(7),
-		EndLine:      github.Int(8),
-		WarningLevel: github.String("failure"),
-		Title:        github.String("Error validating Deployment against master schema"),
-		Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
-		RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
-	}}
+	want := []*github.CheckRunAnnotation{
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(1),
+			EndLine:      github.Int(1),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against master schema"),
+			Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
+			RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
+		},
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(1),
+			EndLine:      github.Int(1),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against master schema"),
+			Message:      github.String("template: template is required"),
+			RawDetails:   github.String("* context: (root).spec\n* field: template\n* property: template\n"),
+		},
+	}
 
 	if len(annotations) != len(want) {
 		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
@@ -138,8 +141,8 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 		{
 			FileName:     github.String("deployment.yaml"),
 			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-			StartLine:    github.Int(6),
-			EndLine:      github.Int(7),
+			StartLine:    github.Int(1),
+			EndLine:      github.Int(1),
 			WarningLevel: github.String("failure"),
 			Title:        github.String("Error validating Deployment against strict schema"),
 			Message:      github.String("extra: Additional property extra is not allowed"),
@@ -148,8 +151,8 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 		{
 			FileName:     github.String("deployment.yaml"),
 			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-			StartLine:    github.Int(8),
-			EndLine:      github.Int(9),
+			StartLine:    github.Int(1),
+			EndLine:      github.Int(1),
 			WarningLevel: github.String("failure"),
 			Title:        github.String("Error validating Deployment against strict schema"),
 			Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
@@ -158,8 +161,8 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 		{
 			FileName:     github.String("deployment.yaml"),
 			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-			StartLine:    github.Int(17),
-			EndLine:      github.Int(19),
+			StartLine:    github.Int(1),
+			EndLine:      github.Int(1),
 			WarningLevel: github.String("failure"),
 			Title:        github.String("Error validating Deployment against strict schema"),
 			Message:      github.String("extra-container: Additional property extra-container is not allowed"),
@@ -204,7 +207,8 @@ func TestLineNumbers(t *testing.T) {
 			ctx := context.Background()
 
 			schema := &KubeValidatorConfigSchema{
-				Strict: true,
+				Strict:      true,
+				LineNumbers: true,
 			}
 			var schemas []*KubeValidatorConfigSchema
 			schemas = append(schemas, schema)

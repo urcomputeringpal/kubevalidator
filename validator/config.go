@@ -32,9 +32,10 @@ type KubeValidatorConfigSchema struct {
 	Name       string `yaml:"name,omitempty"`
 	SchemaFork string `yaml:"schemaFork,omitempty"`
 
-	Version    string `yaml:"version,omitempty"`
-	ConfigType string `yaml:"type,omitempty"`
-	Strict     bool   `yaml:"strict,omitempty"`
+	Version     string `yaml:"version,omitempty"`
+	ConfigType  string `yaml:"type,omitempty"`
+	Strict      bool   `yaml:"strict,omitempty"`
+	LineNumbers bool   `yaml:"lineNumbers,omitempty"`
 }
 
 func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []*github.CommitFile) []*Candidate {
