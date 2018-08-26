@@ -239,13 +239,13 @@
   version = "v0.3.0"
 
 [[projects]]
-  branch = "v2"
-  digest = "1:0846f6bc58f2056bb6102bfe7a20d30ca06d7020e5c2917967264a5bc9317a58"
+  digest = "1:7c95b35057a0ff2e19f707173cc1a947fa43a6eb5c4d300d196ece0334046082"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "d0fc72bff94e0676354bcfb269988eea57350032"
-  source = "github.com/mozilla-services/yaml"
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  source = "github.com/go-yaml/yaml"
+  version = "v2.2.1"
 
 [[projects]]
   branch = "master"
