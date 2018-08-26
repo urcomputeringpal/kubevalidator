@@ -1,12 +1,17 @@
 package validator
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -169,4 +174,91 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 		t.Error(diff)
 	}
 	return
+}
+
+func TestLineNumbers(t *testing.T) {
+	client, mux, _, teardown := setup()
+	defer teardown()
+
+	filepath.Walk("../fixtures/line-numbers", func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+
+			filePath, _ := filepath.Abs(path)
+			fileBase := filepath.Base(path)
+			fileContents, _ := ioutil.ReadFile(filePath)
+			contentString := base64.StdEncoding.EncodeToString(fileContents)
+			mux.HandleFunc(fmt.Sprintf("/repos/r/o/contents/%s", fileBase), func(w http.ResponseWriter, r *http.Request) {
+				testMethod(t, r, "GET")
+				fmt.Fprintf(w, `{
+					"type": "file",
+					"encoding": "base64",
+					"size": 20678,
+					"name": "%s",
+					"path": "%s",
+					"content": "%s"
+				}`, fileBase, fileBase, contentString)
+			})
+
+			ctx := context.Background()
+
+			schema := &KubeValidatorConfigSchema{
+				Strict: true,
+			}
+			var schemas []*KubeValidatorConfigSchema
+			schemas = append(schemas, schema)
+
+			candidate := NewCandidate(
+				&Context{
+					Ctx: &ctx,
+					Event: &github.CheckSuiteEvent{
+						CheckSuite: &github.CheckSuite{
+							HeadSHA: github.String("master"),
+						},
+						Repo: &github.Repository{
+							Name: github.String("o"),
+							Owner: &github.User{
+								Login: github.String("r"),
+							},
+						},
+					},
+					Github: client,
+				}, &github.CommitFile{
+					BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+					Filename: github.String(fileBase),
+				}, schemas)
+
+			var annotations Annotations
+
+			var candidates Candidates
+			candidates = append(candidates, candidate)
+
+			annotations = append(annotations, candidates.LoadBytes()...)
+			annotations = append(annotations, candidates.Validate()...)
+
+			scanner := bufio.NewScanner(bytes.NewReader(fileContents))
+			var comment string
+			for scanner.Scan() {
+				comment = scanner.Text()
+				break
+			}
+
+			matches := strings.Split(comment, " ")
+
+			if len(annotations) != (len(matches) - 1) {
+				t.Errorf("%s: expected %d annotations, got %d", path, (len(matches) - 1), len(annotations))
+				return nil
+			}
+
+			for i, val := range matches[1:] {
+				ln := strings.Split(val, "-")
+				startLine, _ := strconv.Atoi(ln[0])
+				endLine, _ := strconv.Atoi(ln[1])
+				if annotations[i].GetStartLine() != startLine || annotations[i].GetEndLine() != endLine {
+					t.Errorf("%s[%d]: (%s) expected annotation on lines %d-%d, got %d-%d", path, i, annotations[i].GetMessage(), startLine, endLine, annotations[i].GetStartLine(), annotations[i].GetEndLine())
+				}
+			}
+
+		}
+		return nil
+	})
 }
