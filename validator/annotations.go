@@ -9,7 +9,7 @@ func (a Annotations) Len() int {
 	return len(a)
 }
 func (a Annotations) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
+	*a[i], *a[j] = *a[j], *a[i]
 }
 func (a Annotations) Less(i, j int) bool {
 	return a[i].GetStartLine() < a[j].GetStartLine()
