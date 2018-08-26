@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"sort"
@@ -21,6 +22,10 @@ type Candidate struct {
 	file    *github.CommitFile
 	schemas []*KubeValidatorConfigSchema
 }
+
+const (
+	placeholderString = "AAA___KUBEVALIDATOR___PLACEHOLDER___AAA"
+)
 
 var (
 	defaultSchema = &KubeValidatorConfigSchema{
@@ -134,35 +139,72 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 	return annotations
 }
 
-func lineNumbers(bytes *[]byte, e gojsonschema.ResultError) (int, int) {
-	dotted := strings.TrimPrefix(e.Context().String(), "(root)")
+func lineNumbers(b *[]byte, e gojsonschema.ResultError) (int, int) {
+	var dotted string
+	rootContext := strings.TrimPrefix(e.Context().String(), "(root).")
+	dotted = fmt.Sprintf(".%s", rootContext)
 	path := yamlpatch.OpPath(strings.Replace(dotted, ".", "/", -1))
+	// log.Println(e.String())
+	// log.Println(e.Type())
+	// log.Println(path)
 	var patch yamlpatch.Patch
+	var s interface{}
+	s = placeholderString
+	value := yamlpatch.NewNode(&s)
 	operation := yamlpatch.Operation{
-		Op:   "remove",
-		Path: path,
+		Op:    "replace",
+		Path:  path,
+		Value: value,
 	}
 	patch = append(patch, operation)
-
-	patchedBytes, err := patch.Apply(*bytes)
+	patchedBytes, err := patch.Apply(*b)
 	if err != nil {
 		return 1, 1
 	}
 
 	difflibDiff := difflib.UnifiedDiff{
-		A:        difflib.SplitLines(string(*bytes)),
+		A:        difflib.SplitLines(string(*b)),
 		B:        difflib.SplitLines(string(patchedBytes)),
 		FromFile: "Original",
 		ToFile:   "Current",
-		Context:  3,
+		Context:  0,
 	}
-	unifiedDiffString, _ := difflib.GetUnifiedDiffString(difflibDiff)
-	fileDiff, _ := diff.ParseFileDiff([]byte(unifiedDiffString))
+	unifiedDiffString, err := difflib.GetUnifiedDiffString(difflibDiff)
+	if err != nil {
+		return 1, 1
+	}
 
-	startLine := int(fileDiff.Hunks[0].OrigStartLine)
-	endLine := int(fileDiff.Hunks[0].OrigStartLine + fileDiff.Hunks[0].OrigLines)
+	// log.Println(unifiedDiffString)
+	fileDiff, err := diff.ParseFileDiff([]byte(unifiedDiffString))
+	if err != nil {
+		return 1, 1
+	}
 
-	return startLine, endLine
+	for _, hunk := range fileDiff.Hunks {
+		scanner := bufio.NewScanner(bytes.NewReader(hunk.Body))
+
+		line := 1
+		found := false
+		for scanner.Scan() {
+			if strings.Contains(scanner.Text(), placeholderString) {
+				found = true
+				continue
+			}
+			line++
+		}
+		if found {
+			// log.Printf("%+v", hunk)
+			startLine := int(hunk.NewStartLine)
+			endLine := int(hunk.NewStartLine + hunk.NewLines)
+			// log.Printf("start: %d end: %d", startLine, endLine)
+			return startLine, endLine
+		}
+
+		if err := scanner.Err(); err != nil {
+			continue
+		}
+	}
+	return 1, 1
 }
 
 func resultErrorDetailString(e gojsonschema.ResultError) string {

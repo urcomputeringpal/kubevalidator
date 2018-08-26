@@ -45,7 +45,7 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 		FileName:     github.String("deployment.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
 		StartLine:    github.Int(6),
-		EndLine:      github.Int(8),
+		EndLine:      github.Int(7),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("template: template is required"),
@@ -54,11 +54,47 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 		FileName:     github.String("deployment.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
 		StartLine:    github.Int(7),
-		EndLine:      github.Int(7),
+		EndLine:      github.Int(8),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
 		RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
+	}}
+
+	if len(annotations) != len(want) {
+		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
+	}
+
+	for i, annotation := range annotations {
+		if diff := deep.Equal(annotation, want[i]); diff != nil {
+			t.Error(diff)
+		}
+	}
+}
+
+func TestAnnotationsForInvalidArrayCandidate(t *testing.T) {
+	candidate := NewCandidate(
+		&Context{
+			Event: &github.CheckSuiteEvent{},
+		}, &github.CommitFile{
+			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			Filename: github.String("deployment.yaml"),
+		}, nil)
+
+	filePath, _ := filepath.Abs("../fixtures/invalid/deployment/extra-field-in-containers.yaml")
+	fileContents, _ := ioutil.ReadFile(filePath)
+	candidate.setBytes(&fileContents)
+	annotations := candidate.Validate()
+
+	want := []*github.CheckRunAnnotation{{
+		FileName:     github.String("deployment.yaml"),
+		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+		StartLine:    github.Int(16),
+		EndLine:      github.Int(28),
+		WarningLevel: github.String("failure"),
+		Title:        github.String("Error validating Deployment against master schema"),
+		Message:      github.String("spec.template.spec.containers.0.name: Invalid type. Expected: string, given: integer"),
+		RawDetails:   github.String("* context: (root).spec.template.spec.containers.0.name\n* expected: string\n* field: spec.template.spec.containers.0.name\n* given: integer\n"),
 	}}
 
 	if len(annotations) != len(want) {
