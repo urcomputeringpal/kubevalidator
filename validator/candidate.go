@@ -79,8 +79,8 @@ func (c *Candidate) MarkdownListItem() string {
 }
 
 // Validate bytes with kubeval and return an array of CheckRunAnnotation
-func (c *Candidate) Validate() []*github.CheckRunAnnotation {
-	var annotations []*github.CheckRunAnnotation
+func (c *Candidate) Validate() Annotations {
+	var annotations Annotations
 	for _, schema := range c.schemas {
 		kubeval.SchemaLocation = schema.SchemaLocation()
 
@@ -101,8 +101,10 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 			schemaName = schema.Name
 		} else if schema.Version != "" {
 			schemaName = schema.Version
+		} else if schema.Strict {
+			schemaName = "strict"
 		} else {
-			schemaName = fmt.Sprintf("%v", schema)
+			schemaName = "default"
 		}
 
 		if c.bytes == nil {
@@ -142,13 +144,14 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 					StartLine:    &start,
 					EndLine:      &end,
 					WarningLevel: github.String("failure"),
-					Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
+					Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", result.Kind, schemaName)),
 					Message:      github.String(error.String()),
 					RawDetails:   github.String(resultErrorDetailString(error)),
 				})
 			}
 		}
 	}
+	sort.Sort(annotations)
 	return annotations
 }
 
@@ -210,6 +213,10 @@ func lineNumbers(b *[]byte, e gojsonschema.ResultError) (int, int) {
 			startLine := int(hunk.NewStartLine)
 			endLine := int(hunk.NewStartLine + hunk.NewLines)
 			// log.Printf("start: %d end: %d", startLine, endLine)
+
+			// if e.Type() == "additional_property_not_allowed" {
+			// 	return line, line+1
+			// }
 			return startLine, endLine
 		}
 

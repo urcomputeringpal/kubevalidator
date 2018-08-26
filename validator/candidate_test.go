@@ -124,40 +124,71 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 	}
 }
 
-func TestAnnotationsForInvalidArrayCandidate(t *testing.T) {
+func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
+	schema := &KubeValidatorConfigSchema{
+		Strict: true,
+	}
+	var schemas []*KubeValidatorConfigSchema
+	schemas = append(schemas, schema)
 	candidate := NewCandidate(
 		&Context{
 			Event: &github.CheckSuiteEvent{},
 		}, &github.CommitFile{
 			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
 			Filename: github.String("deployment.yaml"),
-		}, nil)
+		}, schemas)
 
-	filePath, _ := filepath.Abs("../fixtures/invalid/deployment/extra-field-in-containers.yaml")
+	filePath, _ := filepath.Abs("../fixtures/invalid/deployment/multiple.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	candidate.setBytes(&fileContents)
 	annotations := candidate.Validate()
 
-	want := []*github.CheckRunAnnotation{{
-		FileName:     github.String("deployment.yaml"),
-		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-		StartLine:    github.Int(16),
-		EndLine:      github.Int(28),
-		WarningLevel: github.String("failure"),
-		Title:        github.String("Error validating Deployment against master schema"),
-		Message:      github.String("spec.template.spec.containers.0.name: Invalid type. Expected: string, given: integer"),
-		RawDetails:   github.String("* context: (root).spec.template.spec.containers.0.name\n* expected: string\n* field: spec.template.spec.containers.0.name\n* given: integer\n"),
-	}}
+	var want Annotations
+	want = []*github.CheckRunAnnotation{
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(6),
+			EndLine:      github.Int(7),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against strict schema"),
+			Message:      github.String("extra: Additional property extra is not allowed"),
+			RawDetails:   github.String("* context: (root).spec\n* field: extra\n* property: extra\n"),
+		},
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(8),
+			EndLine:      github.Int(9),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against strict schema"),
+			Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
+			RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
+		},
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(17),
+			EndLine:      github.Int(19),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against strict schema"),
+			Message:      github.String("extra-container: Additional property extra-container is not allowed"),
+			RawDetails:   github.String("* context: (root).spec.template.spec.containers.0\n* field: extra-container\n* property: extra-container\n"),
+		},
+	}
 
 	if len(annotations) != len(want) {
 		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
 	}
 
-	for i, annotation := range annotations {
-		if diff := deep.Equal(annotation, want[i]); diff != nil {
-			t.Error(diff)
-		}
+	if diff := deep.Equal(annotations, want); diff != nil {
+		t.Error(diff)
 	}
+	// for i, annotation := range annotations {
+	// 	if diff := deep.Equal(annotation, want[i]); diff != nil {
+	// 		t.Error(diff)
+	// 	}
+	// }
 }
 
 func TestAnnotationsWithCustomSchemaSuccess(t *testing.T) {
