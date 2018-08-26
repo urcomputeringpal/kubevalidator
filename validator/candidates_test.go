@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func TestAnnotationsForValidCandidates(t *testing.T) {
+func TestAnnotationsForInvalidCandidates(t *testing.T) {
 	var candidates Candidates
 	candidate := NewCandidate(
 		&Context{
@@ -75,7 +75,7 @@ func TestAnnotationsForValidCandidates(t *testing.T) {
 
 func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 	client, mux, _, teardown := setup()
-	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
+	filePath, _ := filepath.Abs("../fixtures/invalid/deployment/multiple.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	contentString := base64.StdEncoding.EncodeToString(fileContents)
 	defer teardown()
@@ -93,6 +93,12 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 
 	ctx := context.Background()
 
+	schema := &KubeValidatorConfigSchema{
+		Strict: true,
+	}
+	var schemas []*KubeValidatorConfigSchema
+	schemas = append(schemas, schema)
+
 	candidate := NewCandidate(
 		&Context{
 			Ctx: &ctx,
@@ -109,10 +115,11 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 			},
 			Github: client,
 		}, &github.CommitFile{
+			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
 			Filename: github.String("deployment.yaml"),
-		}, nil)
+		}, schemas)
 
-	var annotations []*github.CheckRunAnnotation
+	var annotations Annotations
 
 	var candidates Candidates
 	candidates = append(candidates, candidate)
@@ -120,8 +127,46 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 	annotations = append(annotations, candidates.LoadBytes()...)
 	annotations = append(annotations, candidates.Validate()...)
 
-	if len(annotations) > 0 {
-		t.Errorf("Expected no annotations, got %+v", github.Stringify(annotations))
+	var want Annotations
+	want = []*github.CheckRunAnnotation{
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(6),
+			EndLine:      github.Int(7),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against strict schema"),
+			Message:      github.String("extra: Additional property extra is not allowed"),
+			RawDetails:   github.String("* context: (root).spec\n* field: extra\n* property: extra\n"),
+		},
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(8),
+			EndLine:      github.Int(9),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against strict schema"),
+			Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
+			RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
+		},
+		{
+			FileName:     github.String("deployment.yaml"),
+			BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:    github.Int(17),
+			EndLine:      github.Int(19),
+			WarningLevel: github.String("failure"),
+			Title:        github.String("Error validating Deployment against strict schema"),
+			Message:      github.String("extra-container: Additional property extra-container is not allowed"),
+			RawDetails:   github.String("* context: (root).spec.template.spec.containers.0\n* field: extra-container\n* property: extra-container\n"),
+		},
+	}
+
+	if len(annotations) != len(want) {
+		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
+	}
+
+	if diff := deep.Equal(annotations, want); diff != nil {
+		t.Error(diff)
 	}
 	return
 }
