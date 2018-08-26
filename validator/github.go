@@ -163,8 +163,8 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 		return nil, errors.Wrap(err, fmt.Sprintf("Couldn't load contents of %s", f))
 	}
 
-	bytes := []byte(contentToValidate)
-	return &bytes, nil
+	b := []byte(contentToValidate)
+	return &b, nil
 }
 
 func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*KubeValidatorConfig, *github.CheckRunAnnotation, error) {
