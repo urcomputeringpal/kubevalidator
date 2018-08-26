@@ -2,7 +2,6 @@ package validator
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"reflect"
 	"time"
@@ -53,7 +52,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 
 		checkRunStart := time.Now()
 		var annotations []*github.CheckRunAnnotation
-		var filesToValidate map[string]*Candidate
+		var candidates Candidates
 
 		config, configAnnotation, err := c.kubeValidatorConfigOrAnnotation(e)
 		if err != nil {
@@ -74,37 +73,12 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			return
 		}
 
-		filesToValidate = config.matchingCandidates(changedFileList)
-
-		// Validate the files
-		for filename, file := range filesToValidate {
-			bytes, err := c.bytesForFilename(e, filename)
-			if err != nil {
-				annotations = append(annotations, &github.CheckRunAnnotation{
-					FileName:     file.File.Filename,
-					BlobHRef:     file.File.BlobURL,
-					StartLine:    github.Int(1),
-					EndLine:      github.Int(1),
-					WarningLevel: github.String("failure"),
-					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", *file.File.Filename)),
-					Message:      github.String(fmt.Sprintf("%+v", err)),
-				})
-			}
-
-			if file.Schemas == nil {
-				fileAnnotations := AnnotateFile(bytes, file.File)
-				annotations = append(annotations, fileAnnotations...)
-			}
-
-			for _, schema := range file.Schemas {
-				fileAnnotations := AnnotateFileWithSchema(bytes, file.File, schema)
-				annotations = append(annotations, fileAnnotations...)
-			}
-
-		}
+		candidates = config.matchingCandidates(c, changedFileList)
+		annotations = append(annotations, candidates.LoadBytes()...)
+		annotations = append(annotations, candidates.Validate()...)
 
 		// Annotate the PR
-		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, filesToValidate, annotations)
+		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, candidates, annotations)
 		if finalCheckRunErr != nil {
 			// TODO return a 500 to signal that retry is preferred
 			log.Println(errors.Wrap(finalCheckRunErr, "Couldn't create check run"))

@@ -9,25 +9,38 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func TestAnnotationsForValidFile(t *testing.T) {
+func TestAnnotationsForValidCandidate(t *testing.T) {
+	candidate := NewCandidate(
+		&Context{
+			Event: &github.CheckSuiteEvent{},
+		}, &github.CommitFile{
+			Filename: github.String("fixtures/deployment.yaml"),
+		}, nil)
+
 	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
-	checkRunAnnotations := AnnotateFile(&fileContents, &github.CommitFile{
-		Filename: github.String("fixtures/deployment.yaml"),
-	})
+	candidate.setBytes(&fileContents)
+	annotations := candidate.Validate()
 
-	if len(checkRunAnnotations) > 0 {
-		t.Errorf("Expected no annotations, got %+v", *checkRunAnnotations[0].Message)
+	if len(annotations) > 0 {
+		t.Errorf("Expected no annotations, got %+v", github.Stringify(annotations))
 	}
 }
 
-func TestAnnotationsForInvalidFile(t *testing.T) {
+func TestAnnotationsForInvalidCandidate(t *testing.T) {
+	candidate := NewCandidate(
+		&Context{
+			Event: &github.CheckSuiteEvent{},
+		}, &github.CommitFile{
+			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			Filename: github.String("deployment.yaml"),
+		}, nil)
+
 	filePath, _ := filepath.Abs("../fixtures/invalid.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
-	checkRunAnnotations := AnnotateFile(&fileContents, &github.CommitFile{
-		BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-		Filename: github.String("deployment.yaml"),
-	})
+	candidate.setBytes(&fileContents)
+	annotations := candidate.Validate()
+
 	want := []*github.CheckRunAnnotation{{
 		FileName:     github.String("deployment.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
@@ -48,11 +61,11 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 		RawDetails:   github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 	}}
 
-	if len(checkRunAnnotations) != len(want) {
-		t.Errorf("a total of %d annotations were returned, wanted %d", len(checkRunAnnotations), len(want))
+	if len(annotations) != len(want) {
+		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
 	}
 
-	for i, annotation := range checkRunAnnotations {
+	for i, annotation := range annotations {
 		if diff := deep.Equal(annotation, want[i]); diff != nil {
 			t.Error(diff)
 		}
@@ -60,33 +73,48 @@ func TestAnnotationsForInvalidFile(t *testing.T) {
 }
 
 func TestAnnotationsWithCustomSchemaSuccess(t *testing.T) {
-	filePath, _ := filepath.Abs("../fixtures/invalid/1.6.0/volumeerror.yaml")
-	fileContents, _ := ioutil.ReadFile(filePath)
-	checkRunAnnotations := AnnotateFileWithSchema(&fileContents,
-		&github.CommitFile{
+	schema := &KubeValidatorConfigSchema{
+		Version: "1.10.0",
+	}
+	var schemas []*KubeValidatorConfigSchema
+	schemas = append(schemas, schema)
+	candidate := NewCandidate(
+		&Context{
+			Event: &github.CheckSuiteEvent{},
+		}, &github.CommitFile{
 			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
 			Filename: github.String("volumeerror.yaml"),
-		},
-		&KubeValidatorConfigSchema{
-			Version: "1.10.0",
-		})
+		}, schemas)
 
-	if len(checkRunAnnotations) != 0 {
-		t.Errorf("%d annotations returned, expected 0: %+v", len(checkRunAnnotations), checkRunAnnotations[0].GetTitle())
+	filePath, _ := filepath.Abs("../fixtures/invalid/1.6.0/volumeerror.yaml")
+	fileContents, _ := ioutil.ReadFile(filePath)
+	candidate.setBytes(&fileContents)
+	annotations := candidate.Validate()
+
+	if len(annotations) != 0 {
+		t.Errorf("%d annotations returned, expected 0: %+v", len(annotations), github.Stringify(annotations))
 	}
 }
 
 func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
-	filePath, _ := filepath.Abs("../fixtures/invalid/1.6.0/volumeerror.yaml")
-	fileContents, _ := ioutil.ReadFile(filePath)
-	checkRunAnnotations := AnnotateFileWithSchema(&fileContents,
-		&github.CommitFile{
+	schema := &KubeValidatorConfigSchema{
+		Version: "1.6.0",
+	}
+	var schemas []*KubeValidatorConfigSchema
+	schemas = append(schemas, schema)
+	candidate := NewCandidate(
+		&Context{
+			Event: &github.CheckSuiteEvent{},
+		}, &github.CommitFile{
 			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
 			Filename: github.String("volumeerror.yaml"),
-		},
-		&KubeValidatorConfigSchema{
-			Version: "1.6.0",
-		})
+		}, schemas)
+
+	filePath, _ := filepath.Abs("../fixtures/invalid/1.6.0/volumeerror.yaml")
+	fileContents, _ := ioutil.ReadFile(filePath)
+	candidate.setBytes(&fileContents)
+	annotations := candidate.Validate()
+
 	want := []*github.CheckRunAnnotation{{
 		FileName:     github.String("volumeerror.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
@@ -97,11 +125,11 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 		Message:      github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
 	}}
 
-	if len(checkRunAnnotations) != len(want) {
-		t.Errorf("a total of %d annotations were returned, wanted %d", len(checkRunAnnotations), len(want))
+	if len(annotations) != len(want) {
+		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
 	}
 
-	for i, annotation := range checkRunAnnotations {
+	for i, annotation := range annotations {
 		if diff := deep.Equal(annotation, want[i]); diff != nil {
 			t.Error(diff)
 		}

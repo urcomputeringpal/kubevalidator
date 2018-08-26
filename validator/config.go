@@ -37,24 +37,22 @@ type KubeValidatorConfigSchema struct {
 	Strict     bool   `yaml:"strict,omitempty"`
 }
 
-func (config *KubeValidatorConfig) matchingCandidates(files []*github.CommitFile) map[string]*Candidate {
-	filesToValidate := make(map[string]*Candidate)
+func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []*github.CommitFile) []Candidate {
+	var candidates []Candidate
 
 	for _, file := range files {
 		if config.Spec != nil {
 			spec := *config.Spec
 			for _, manifestConfig := range spec.Manifests {
 				if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
-					filesToValidate[file.GetFilename()] = &Candidate{
-						File:    file,
-						Schemas: manifestConfig.Schemas,
-					}
+					candidate := NewCandidate(context, file, manifestConfig.Schemas)
+					candidates = append(candidates, *candidate)
 				}
 			}
 		}
 	}
 
-	return filesToValidate
+	return candidates
 }
 
 // Valid returns a boolean indicatating whether or not the config is well formed
