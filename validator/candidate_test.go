@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -180,7 +181,7 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 	if len(annotations) != len(want) {
 		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
 	}
-
+	sort.Sort(want)
 	if diff := deep.Equal(annotations, want); diff != nil {
 		t.Error(diff)
 	}

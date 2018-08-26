@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -166,6 +167,7 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 		},
 	}
 
+	sort.Sort(want)
 	if len(annotations) != len(want) {
 		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
 	}
