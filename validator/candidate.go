@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/garethr/kubeval/kubeval"
 	"github.com/google/go-github/github"
+	yamlpatch "github.com/krishicks/yaml-patch"
+	difflib "github.com/pmezard/go-difflib/difflib"
 	"github.com/xeipuuv/gojsonschema"
+	"sourcegraph.com/sourcegraph/go-diff/diff"
 )
 
 // Candidate reprensets a file to be validated
@@ -113,11 +117,12 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 
 		for _, result := range results {
 			for _, error := range result.Errors {
+				start, end := lineNumbers(c.bytes, error)
 				annotations = append(annotations, &github.CheckRunAnnotation{
 					FileName:     c.file.Filename,
 					BlobHRef:     c.file.BlobURL,
-					StartLine:    github.Int(1),
-					EndLine:      github.Int(1),
+					StartLine:    &start,
+					EndLine:      &end,
 					WarningLevel: github.String("failure"),
 					Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
 					Message:      github.String(error.String()),
@@ -127,6 +132,37 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 		}
 	}
 	return annotations
+}
+
+func lineNumbers(bytes *[]byte, e gojsonschema.ResultError) (int, int) {
+	dotted := strings.TrimPrefix(e.Context().String(), "(root)")
+	path := yamlpatch.OpPath(strings.Replace(dotted, ".", "/", -1))
+	var patch yamlpatch.Patch
+	operation := yamlpatch.Operation{
+		Op:   "remove",
+		Path: path,
+	}
+	patch = append(patch, operation)
+
+	patchedBytes, err := patch.Apply(*bytes)
+	if err != nil {
+		return 1, 1
+	}
+
+	difflibDiff := difflib.UnifiedDiff{
+		A:        difflib.SplitLines(string(*bytes)),
+		B:        difflib.SplitLines(string(patchedBytes)),
+		FromFile: "Original",
+		ToFile:   "Current",
+		Context:  3,
+	}
+	unifiedDiffString, _ := difflib.GetUnifiedDiffString(difflibDiff)
+	fileDiff, _ := diff.ParseFileDiff([]byte(unifiedDiffString))
+
+	startLine := int(fileDiff.Hunks[0].OrigStartLine)
+	endLine := int(fileDiff.Hunks[0].OrigStartLine + fileDiff.Hunks[0].OrigLines)
+
+	return startLine, endLine
 }
 
 func resultErrorDetailString(e gojsonschema.ResultError) string {

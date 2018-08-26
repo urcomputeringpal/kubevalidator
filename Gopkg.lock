@@ -42,6 +42,14 @@
   revision = "57af0be209c537ba1d9c2a4b285ab7aea0897e51"
 
 [[projects]]
+  digest = "1:38e684375ef5b55e812332266d63f9fc5b6329ab303067c4cdda051db6d29ca4"
+  name = "github.com/gogo/protobuf"
+  packages = ["proto"]
+  pruneopts = "NUT"
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
+
+[[projects]]
   digest = "1:3b53751e52bd3b7b782ff3b78971457c52537a745dd1f7c272206b6e56c31465"
   name = "github.com/google/go-github"
   packages = ["github"]
@@ -93,6 +101,14 @@
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
+  branch = "master"
+  digest = "1:3aeab0dee856f61a78f36d6dfc00e0634682e4e05cd39faf31a80ace21883751"
+  name = "github.com/krishicks/yaml-patch"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "94f42521ff99ba62ddeca5ddae47264ade0b8df6"
+
+[[projects]]
   digest = "1:d244f8666a838fe6ad70ec8fe77f50ebc29fdc3331a2729ba5886bef8435d10d"
   name = "github.com/magiconair/properties"
   packages = ["."]
@@ -123,6 +139,14 @@
   pruneopts = "NUT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  pruneopts = "NUT"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
 
 [[projects]]
   digest = "1:330e9062b308ac597e28485699c02223bd052437a6eed32a173c9227dcb9d95a"
@@ -215,12 +239,29 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:7c95b35057a0ff2e19f707173cc1a947fa43a6eb5c4d300d196ece0334046082"
+  branch = "v2"
+  digest = "1:0846f6bc58f2056bb6102bfe7a20d30ca06d7020e5c2917967264a5bc9317a58"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "d0fc72bff94e0676354bcfb269988eea57350032"
+  source = "github.com/mozilla-services/yaml"
+
+[[projects]]
+  branch = "master"
+  digest = "1:17f57ca0d1ba2c234063d64ffd589c349eb00cc3dc211df50f47e81f3d971589"
+  name = "sourcegraph.com/sourcegraph/go-diff"
+  packages = ["diff"]
+  pruneopts = "NUT"
+  revision = "3f415a150aec0685cb81b73cc201e762e075006d"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6b1ed3514b803e40c881e6c432da3a339c5bbfb7a267b9906e77bb0c408eae77"
+  name = "sourcegraph.com/sqs/pbtypes"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "d3ebe8f20ae404b082e57662738480545bc2ad3d"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -230,8 +271,12 @@
     "github.com/garethr/kubeval/kubeval",
     "github.com/go-test/deep",
     "github.com/google/go-github/github",
+    "github.com/krishicks/yaml-patch",
     "github.com/pkg/errors",
+    "github.com/pmezard/go-difflib/difflib",
+    "github.com/xeipuuv/gojsonschema",
     "gopkg.in/yaml.v2",
+    "sourcegraph.com/sourcegraph/go-diff/diff",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

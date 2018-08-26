@@ -44,8 +44,8 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 	want := []*github.CheckRunAnnotation{{
 		FileName:     github.String("deployment.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-		StartLine:    github.Int(1),
-		EndLine:      github.Int(1),
+		StartLine:    github.Int(6),
+		EndLine:      github.Int(8),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("template: template is required"),
@@ -53,8 +53,8 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 	}, {
 		FileName:     github.String("deployment.yaml"),
 		BlobHRef:     github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
-		StartLine:    github.Int(1),
-		EndLine:      github.Int(1),
+		StartLine:    github.Int(7),
+		EndLine:      github.Int(7),
 		WarningLevel: github.String("failure"),
 		Title:        github.String("Error validating Deployment against master schema"),
 		Message:      github.String("spec.replicas: Invalid type. Expected: integer, given: string"),

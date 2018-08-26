@@ -2,7 +2,6 @@ package yaml
 
 import (
 	"bytes"
-	"fmt"
 )
 
 // Flush the buffer if needed.
@@ -589,6 +588,9 @@ func yaml_emitter_emit_block_sequence_item(emitter *yaml_emitter_t, event *yaml_
 		emitter.states = emitter.states[:len(emitter.states)-1]
 		return true
 	}
+	if event.typ == yaml_COMMENT_EVENT {
+		return yaml_emitter_emit_comment(emitter, event)
+	}
 	if !yaml_emitter_write_indent(emitter) {
 		return false
 	}
@@ -601,11 +603,15 @@ func yaml_emitter_emit_block_sequence_item(emitter *yaml_emitter_t, event *yaml_
 
 // Expect a block key node.
 func yaml_emitter_emit_block_mapping_key(emitter *yaml_emitter_t, event *yaml_event_t, first bool) bool {
+	if event.typ == yaml_COMMENT_EVENT {
+		return yaml_emitter_emit_comment(emitter, event)
+	}
 	if first {
 		if !yaml_emitter_increase_indent(emitter, false, false) {
 			return false
 		}
 	}
+
 	if event.typ == yaml_MAPPING_END_EVENT {
 		emitter.indent = emitter.indents[len(emitter.indents)-1]
 		emitter.indents = emitter.indents[:len(emitter.indents)-1]
@@ -613,6 +619,7 @@ func yaml_emitter_emit_block_mapping_key(emitter *yaml_emitter_t, event *yaml_ev
 		emitter.states = emitter.states[:len(emitter.states)-1]
 		return true
 	}
+
 	if !yaml_emitter_write_indent(emitter) {
 		return false
 	}
@@ -629,6 +636,7 @@ func yaml_emitter_emit_block_mapping_key(emitter *yaml_emitter_t, event *yaml_ev
 
 // Expect a block value node.
 func yaml_emitter_emit_block_mapping_value(emitter *yaml_emitter_t, event *yaml_event_t, simple bool) bool {
+
 	if simple {
 		if !yaml_emitter_write_indicator(emitter, []byte{':'}, false, false, false) {
 			return false
@@ -663,10 +671,13 @@ func yaml_emitter_emit_node(emitter *yaml_emitter_t, event *yaml_event_t,
 		return yaml_emitter_emit_sequence_start(emitter, event)
 	case yaml_MAPPING_START_EVENT:
 		return yaml_emitter_emit_mapping_start(emitter, event)
+	case yaml_COMMENT_EVENT:
+		return yaml_emitter_emit_comment(emitter, event)
 	default:
 		return yaml_emitter_set_emitter_error(emitter,
-			fmt.Sprintf("expected SCALAR, SEQUENCE-START, MAPPING-START, or ALIAS, but got %v", event.typ))
+			"expected SCALAR, SEQUENCE-START, MAPPING-START, or ALIAS")
 	}
+	return false
 }
 
 // Expect ALIAS.
@@ -677,6 +688,15 @@ func yaml_emitter_emit_alias(emitter *yaml_emitter_t, event *yaml_event_t) bool 
 	emitter.state = emitter.states[len(emitter.states)-1]
 	emitter.states = emitter.states[:len(emitter.states)-1]
 	return true
+}
+
+func yaml_emitter_emit_comment(emitter *yaml_emitter_t, event *yaml_event_t) bool {
+	if !yaml_emitter_write_indent(emitter) {
+		return false
+	}
+	out := []byte{'#'}
+	out = append(out, event.value...)
+	return write_all(emitter, out)
 }
 
 // Expect SCALAR.
@@ -843,7 +863,7 @@ func yaml_emitter_select_scalar_style(emitter *yaml_emitter_t, event *yaml_event
 	return true
 }
 
-// Write an anchor.
+// Write an achor.
 func yaml_emitter_process_anchor(emitter *yaml_emitter_t) bool {
 	if emitter.anchor_data.anchor == nil {
 		return true
@@ -995,10 +1015,10 @@ func yaml_emitter_analyze_scalar(emitter *yaml_emitter_t, value []byte) bool {
 		break_space    = false
 		space_break    = false
 
-		preceded_by_whitespace = false
-		followed_by_whitespace = false
-		previous_space         = false
-		previous_break         = false
+		preceeded_by_whitespace = false
+		followed_by_whitespace  = false
+		previous_space          = false
+		previous_break          = false
 	)
 
 	emitter.scalar_data.value = value
@@ -1017,7 +1037,7 @@ func yaml_emitter_analyze_scalar(emitter *yaml_emitter_t, value []byte) bool {
 		flow_indicators = true
 	}
 
-	preceded_by_whitespace = true
+	preceeded_by_whitespace = true
 	for i, w := 0, 0; i < len(value); i += w {
 		w = width(value[i])
 		followed_by_whitespace = i+w >= len(value) || is_blank(value, i+w)
@@ -1048,7 +1068,7 @@ func yaml_emitter_analyze_scalar(emitter *yaml_emitter_t, value []byte) bool {
 					block_indicators = true
 				}
 			case '#':
-				if preceded_by_whitespace {
+				if preceeded_by_whitespace {
 					flow_indicators = true
 					block_indicators = true
 				}
@@ -1089,7 +1109,7 @@ func yaml_emitter_analyze_scalar(emitter *yaml_emitter_t, value []byte) bool {
 		}
 
 		// [Go]: Why 'z'? Couldn't be the end of the string as that's the loop condition.
-		preceded_by_whitespace = is_blankz(value, i)
+		preceeded_by_whitespace = is_blankz(value, i)
 	}
 
 	emitter.scalar_data.multiline = line_breaks
