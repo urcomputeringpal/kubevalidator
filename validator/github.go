@@ -90,7 +90,7 @@ func (c *Context) createConfigInvalidCheckRun(startedAt *time.Time, e *github.Ch
 }
 
 // createFinalCheckRun concludes the check run
-func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent, candidates map[string]*Candidate, annotations []*github.CheckRunAnnotation) error {
+func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent, candidates Candidates, annotations []*github.CheckRunAnnotation) error {
 	var checkRunConclusion string
 	var checkRunText string
 	var checkRunSummary string
@@ -163,8 +163,8 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 		return nil, errors.Wrap(err, fmt.Sprintf("Couldn't load contents of %s", f))
 	}
 
-	bytes := []byte(contentToValidate)
-	return &bytes, nil
+	b := []byte(contentToValidate)
+	return &b, nil
 }
 
 func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*KubeValidatorConfig, *github.CheckRunAnnotation, error) {

@@ -29,17 +29,9 @@
   source = "github.com/urcomputeringpal/go-github"
   revision = "f67f03765936eb4a6b08a37ea7565f54e795ea23"
 
-[[override]]
-  name = "k8s.io/client-go"
-  branch = "master"
-
 [[constraint]]
   name = "github.com/garethr/kubeval"
   version = "0.7.1"
-
-[[constraint]]
-  name = "github.com/GoogleContainerTools/skaffold"
-  version = "v0.11.0"
 
 [[constraint]]
   name = "github.com/bradleyfalzon/ghinstallation"
@@ -48,3 +40,16 @@
 [[constraint]]
   name = "github.com/go-test/deep"
   branch = "master"
+
+[[constraint]]
+  name = "github.com/krishicks/yaml-patch"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/pmezard/go-difflib"
+  branch = "master"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.2.1"
+  source = "github.com/go-yaml/yaml"

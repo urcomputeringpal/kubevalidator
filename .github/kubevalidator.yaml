@@ -6,3 +6,10 @@ spec:
     schemas:
     - version: 1.10.0
       strict: true
+  # Test yoself
+  # Uncomment me to iterate on line number fixtures using the checks ui
+  # - glob: fixtures/line-numbers/*.yaml
+  #   schemas:
+  #   - version: 1.10.0
+  #     strict: true
+  #     lineNumbers: true
