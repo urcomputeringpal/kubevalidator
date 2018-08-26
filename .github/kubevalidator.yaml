@@ -6,3 +6,8 @@ spec:
     schemas:
     - version: 1.10.0
       strict: true
+  # Test yoself
+  - glob: fixtures/line-numbers/*.yaml
+    schemas:
+    - version: 1.10.0
+      strict: true
