@@ -137,12 +137,19 @@ func (c *Candidate) Validate() Annotations {
 
 		for _, result := range results {
 			for _, error := range result.Errors {
-				start, end := lineNumbers(c.bytes, error)
+				var startLine int
+				var endLine int
+				switch error.Type() {
+				default:
+					fmt.Println(error.Type())
+					startLine, endLine = detectLineNumbersDefault(c.bytes, error)
+				}
+
 				annotations = append(annotations, &github.CheckRunAnnotation{
 					FileName:     c.file.Filename,
 					BlobHRef:     c.file.BlobURL,
-					StartLine:    &start,
-					EndLine:      &end,
+					StartLine:    &startLine,
+					EndLine:      &endLine,
 					WarningLevel: github.String("failure"),
 					Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", result.Kind, schemaName)),
 					Message:      github.String(error.String()),
@@ -155,7 +162,7 @@ func (c *Candidate) Validate() Annotations {
 	return annotations
 }
 
-func lineNumbers(b *[]byte, e gojsonschema.ResultError) (int, int) {
+func detectLineNumbersDefault(b *[]byte, e gojsonschema.ResultError) (int, int) {
 	var dotted string
 	rootContext := strings.TrimPrefix(e.Context().String(), "(root).")
 	dotted = fmt.Sprintf(".%s", rootContext)
