@@ -5,7 +5,7 @@ metadata:
   name: kubevalidator
   namespace: kubevalidator
 spec:
-  extra: field
+  extra: fields
   replicas: asdffadff
   selector:
     matchLabels:
