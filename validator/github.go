@@ -164,9 +164,7 @@ func (c *Context) bytesForFilename(e *github.CheckSuiteEvent, f string) (*[]byte
 	}
 
 	b := []byte(contentToValidate)
-	bytePointer := &b
-	log.Printf("github bytes: %T, %p", bytePointer, bytePointer)
-	return bytePointer, nil
+	return &b, nil
 }
 
 func (c *Context) kubeValidatorConfigOrAnnotation(e *github.CheckSuiteEvent) (*KubeValidatorConfig, *github.CheckRunAnnotation, error) {

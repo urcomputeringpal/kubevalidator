@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 
@@ -69,10 +68,7 @@ func (c *Candidate) LoadBytes() *github.CheckRunAnnotation {
 		}
 	}
 
-	log.Printf("c.bytes: %T, %p", c.bytes, c.bytes)
-	log.Printf("bytes: %T, %p", b, b)
 	c.bytes = b
-	log.Printf("c.bytes: %T, %p", c.bytes, c.bytes)
 	return nil
 }
 
@@ -108,8 +104,6 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 		} else {
 			schemaName = fmt.Sprintf("%v", schema)
 		}
-
-		log.Printf("c.bytes at validation time: %T, %p", c.bytes, c.bytes)
 
 		if c.bytes == nil {
 			annotations = append(annotations, &github.CheckRunAnnotation{
