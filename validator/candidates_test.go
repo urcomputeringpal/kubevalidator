@@ -1,7 +1,11 @@
 package validator
 
 import (
+	"context"
+	"encoding/base64"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 	"testing"
 
@@ -21,7 +25,7 @@ func TestAnnotationsForValidCandidates(t *testing.T) {
 	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	candidate.setBytes(&fileContents)
-	candidates = append(candidates, *candidate)
+	candidates = append(candidates, candidate)
 
 	candidate2 := NewCandidate(
 		&Context{
@@ -34,7 +38,7 @@ func TestAnnotationsForValidCandidates(t *testing.T) {
 	filePath2, _ := filepath.Abs("../fixtures/invalid.yaml")
 	fileContents2, _ := ioutil.ReadFile(filePath2)
 	candidate2.setBytes(&fileContents2)
-	candidates = append(candidates, *candidate2)
+	candidates = append(candidates, candidate2)
 
 	annotations := candidates.Validate()
 
@@ -67,4 +71,57 @@ func TestAnnotationsForValidCandidates(t *testing.T) {
 			t.Error(diff)
 		}
 	}
+}
+
+func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
+	client, mux, _, teardown := setup()
+	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
+	fileContents, _ := ioutil.ReadFile(filePath)
+	contentString := base64.StdEncoding.EncodeToString(fileContents)
+	defer teardown()
+	mux.HandleFunc("/repos/r/o/contents/deployment.yaml", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "GET")
+		fmt.Fprintf(w, `{
+			"type": "file",
+			"encoding": "base64",
+			"size": 20678,
+			"name": "LICENSE",
+			"path": "LICENSE",
+			"content": "%s"
+		}`, contentString)
+	})
+
+	ctx := context.Background()
+
+	candidate := NewCandidate(
+		&Context{
+			Ctx: &ctx,
+			Event: &github.CheckSuiteEvent{
+				CheckSuite: &github.CheckSuite{
+					HeadSHA: github.String("master"),
+				},
+				Repo: &github.Repository{
+					Name: github.String("o"),
+					Owner: &github.User{
+						Login: github.String("r"),
+					},
+				},
+			},
+			Github: client,
+		}, &github.CommitFile{
+			Filename: github.String("deployment.yaml"),
+		}, nil)
+
+	var annotations []*github.CheckRunAnnotation
+
+	var candidates Candidates
+	candidates = append(candidates, candidate)
+
+	annotations = append(annotations, candidates.LoadBytes()...)
+	annotations = append(annotations, candidates.Validate()...)
+
+	if len(annotations) > 0 {
+		t.Errorf("Expected no annotations, got %+v", github.Stringify(annotations))
+	}
+	return
 }

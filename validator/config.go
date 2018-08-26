@@ -37,8 +37,8 @@ type KubeValidatorConfigSchema struct {
 	Strict     bool   `yaml:"strict,omitempty"`
 }
 
-func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []*github.CommitFile) []Candidate {
-	var candidates []Candidate
+func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []*github.CommitFile) []*Candidate {
+	var candidates []*Candidate
 
 	for _, file := range files {
 		if config.Spec != nil {
@@ -46,7 +46,7 @@ func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []
 			for _, manifestConfig := range spec.Manifests {
 				if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
 					candidate := NewCandidate(context, file, manifestConfig.Schemas)
-					candidates = append(candidates, *candidate)
+					candidates = append(candidates, candidate)
 				}
 			}
 		}

@@ -109,6 +109,8 @@ func (c *Candidate) Validate() []*github.CheckRunAnnotation {
 			schemaName = fmt.Sprintf("%v", schema)
 		}
 
+		log.Printf("c.bytes at validation time: %T, %p", c.bytes, c.bytes)
+
 		if c.bytes == nil {
 			annotations = append(annotations, &github.CheckRunAnnotation{
 				FileName:     c.file.Filename,

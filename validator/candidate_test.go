@@ -1,8 +1,6 @@
 package validator
 
 import (
-	"context"
-	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -224,54 +222,4 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 			t.Error(diff)
 		}
 	}
-}
-
-func TestCandidatesLoadingBytesFromGitHub(t *testing.T) {
-	client, mux, _, teardown := setup()
-	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
-	fileContents, _ := ioutil.ReadFile(filePath)
-	contentString := base64.StdEncoding.EncodeToString(fileContents)
-	defer teardown()
-	mux.HandleFunc("/repos/r/o/contents/deployment.yaml", func(w http.ResponseWriter, r *http.Request) {
-		testMethod(t, r, "GET")
-		fmt.Fprintf(w, `{
-			"type": "file",
-			"encoding": "base64",
-			"size": 20678,
-			"name": "LICENSE",
-			"path": "LICENSE",
-			"content": "%s"
-		}`, contentString)
-	})
-
-	ctx := context.Background()
-	candidate := NewCandidate(
-		&Context{
-			Ctx: &ctx,
-			Event: &github.CheckSuiteEvent{
-				CheckSuite: &github.CheckSuite{
-					HeadSHA: github.String("master"),
-				},
-				Repo: &github.Repository{
-					Name: github.String("o"),
-					Owner: &github.User{
-						Login: github.String("r"),
-					},
-				},
-			},
-			Github: client,
-		}, &github.CommitFile{
-			Filename: github.String("deployment.yaml"),
-		}, nil)
-
-	var annotations []*github.CheckRunAnnotation
-	if byteAnnotation := candidate.LoadBytes(); byteAnnotation != nil {
-		annotations = append(annotations, byteAnnotation)
-	}
-	annotations = append(annotations, candidate.Validate()...)
-
-	if len(annotations) > 0 {
-		t.Errorf("Expected no annotations, got %+v", github.Stringify(annotations))
-	}
-	return
 }
