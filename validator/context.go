@@ -19,32 +19,17 @@ type Context struct {
 }
 
 // Process handles webhook events kinda like Probot does
-func (c *Context) Process() {
+func (c *Context) Process() bool {
 	switch e := c.Event.(type) {
 	case *github.CheckSuiteEvent:
 		c.ProcessCheckSuite(c.Event.(*github.CheckSuiteEvent))
-		return
+		return true
 	case *github.PullRequestEvent:
-		prEvent := c.Event.(*github.PullRequestEvent)
-		if *prEvent.Action == "opened" {
-			results, _, err := c.Github.Checks.ListCheckSuitesForRef(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), prEvent.PullRequest.Head.GetRef(), &github.ListCheckSuiteOptions{
-				AppID: c.AppID,
-			})
-			if err != nil {
-				log.Printf("%+v\n", err)
-			}
-			if results.GetTotal() == 1 {
-				suite := results.CheckSuites[0]
-				_, err := c.Github.Checks.ReRequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), suite.GetID())
-				if err != nil {
-					log.Printf("%+v\n", err)
-				}
-			}
-		}
+		return c.ProcessPrEvent(c.Event.(*github.PullRequestEvent))
 	default:
 		log.Printf("ignoring %s\n", reflect.TypeOf(e).String())
-		return
 	}
+	return false
 }
 
 // ProcessCheckSuite validates the Kubernetes YAML that has changed on checks
@@ -94,4 +79,26 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		}
 	}
 	return
+}
+
+// ProcessPrEvent re-requests check suites on PRs when they're opened or re-opened
+func (c *Context) ProcessPrEvent(e *github.PullRequestEvent) bool {
+	if *e.Action == "opened" || *e.Action == "reopened" {
+
+		results, _, err := c.Github.Checks.ListCheckSuitesForRef(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.PullRequest.Head.GetRef(), &github.ListCheckSuiteOptions{
+			AppID: c.AppID,
+		})
+		if err != nil {
+			log.Printf("%+v\n", err)
+		}
+		if results.GetTotal() == 1 {
+			suite := results.CheckSuites[0]
+			_, err := c.Github.Checks.ReRequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), suite.GetID())
+			if err != nil {
+				log.Printf("%+v\n", err)
+			}
+			return true
+		}
+	}
+	return false
 }
