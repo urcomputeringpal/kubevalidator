@@ -99,7 +99,6 @@ func (c *Context) ProcessPrEvent(e *github.PullRequestEvent) bool {
 			}
 			return true
 		}
-		log.Printf("Found %v checksuites for %v on %v, expected 1", results.GetTotal(), *c.AppID, e.PullRequest.Head.GetRef())
 	}
 	return false
 }
