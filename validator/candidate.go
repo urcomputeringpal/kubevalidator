@@ -58,13 +58,13 @@ func (c *Candidate) LoadBytes() *github.CheckRunAnnotation {
 	b, err := c.context.bytesForFilename(c.context.Event.(*github.CheckSuiteEvent), c.file.GetFilename())
 	if err != nil {
 		return &github.CheckRunAnnotation{
-			FileName:     c.file.Filename,
-			BlobHRef:     c.file.BlobURL,
-			StartLine:    github.Int(1),
-			EndLine:      github.Int(1),
-			WarningLevel: github.String("failure"),
-			Title:        github.String(fmt.Sprintf("Error loading %s", c.file.GetFilename())),
-			Message:      github.String(fmt.Sprintf("%+v", err)),
+			Path:            c.file.Filename,
+			BlobHRef:        c.file.BlobURL,
+			StartLine:       github.Int(1),
+			EndLine:         github.Int(1),
+			AnnotationLevel: github.String("failure"),
+			Title:           github.String(fmt.Sprintf("Error loading %s", c.file.GetFilename())),
+			Message:         github.String(fmt.Sprintf("%+v", err)),
 		}
 	}
 
@@ -109,13 +109,13 @@ func (c *Candidate) Validate() Annotations {
 
 		if c.bytes == nil {
 			annotations = append(annotations, &github.CheckRunAnnotation{
-				FileName:     c.file.Filename,
-				BlobHRef:     c.file.BlobURL,
-				StartLine:    github.Int(1),
-				EndLine:      github.Int(1),
-				WarningLevel: github.String("failure"),
-				Title:        github.String("Candidate has no bytes?"),
-				Message:      github.String(fmt.Sprintf("%+v", c)),
+				Path:            c.file.Filename,
+				BlobHRef:        c.file.BlobURL,
+				StartLine:       github.Int(1),
+				EndLine:         github.Int(1),
+				AnnotationLevel: github.String("failure"),
+				Title:           github.String("Candidate has no bytes?"),
+				Message:         github.String(fmt.Sprintf("%+v", c)),
 			})
 			continue
 		}
@@ -124,13 +124,13 @@ func (c *Candidate) Validate() Annotations {
 
 		if err != nil {
 			annotations = append(annotations, &github.CheckRunAnnotation{
-				FileName:     c.file.Filename,
-				BlobHRef:     c.file.BlobURL,
-				StartLine:    github.Int(1),
-				EndLine:      github.Int(1),
-				WarningLevel: github.String("failure"),
-				Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
-				Message:      github.String(fmt.Sprintf("%+v", err)),
+				Path:            c.file.Filename,
+				BlobHRef:        c.file.BlobURL,
+				StartLine:       github.Int(1),
+				EndLine:         github.Int(1),
+				AnnotationLevel: github.String("failure"),
+				Title:           github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
+				Message:         github.String(fmt.Sprintf("%+v", err)),
 			})
 			continue
 		}
@@ -148,14 +148,14 @@ func (c *Candidate) Validate() Annotations {
 				}
 
 				annotations = append(annotations, &github.CheckRunAnnotation{
-					FileName:     c.file.Filename,
-					BlobHRef:     c.file.BlobURL,
-					StartLine:    &startLine,
-					EndLine:      &endLine,
-					WarningLevel: github.String("failure"),
-					Title:        github.String(fmt.Sprintf("Error validating %s against %s schema", result.Kind, schemaName)),
-					Message:      github.String(error.String()),
-					RawDetails:   github.String(resultErrorDetailString(error)),
+					Path:            c.file.Filename,
+					BlobHRef:        c.file.BlobURL,
+					StartLine:       &startLine,
+					EndLine:         &endLine,
+					AnnotationLevel: github.String("failure"),
+					Title:           github.String(fmt.Sprintf("Error validating %s against %s schema", result.Kind, schemaName)),
+					Message:         github.String(error.String()),
+					RawDetails:      github.String(resultErrorDetailString(error)),
 				})
 			}
 		}
