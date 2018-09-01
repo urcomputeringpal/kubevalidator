@@ -50,11 +50,11 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:3b53751e52bd3b7b782ff3b78971457c52537a745dd1f7c272206b6e56c31465"
+  digest = "1:4dd8823d2cf1ddd286ac29d20745d8c332eba4cfcfa49807246e15a13ccbd5cc"
   name = "github.com/google/go-github"
   packages = ["github"]
   pruneopts = "NUT"
-  revision = "f67f03765936eb4a6b08a37ea7565f54e795ea23"
+  revision = "8ba654d047b158b6fec86a826e42954647ebb3fb"
   source = "github.com/urcomputeringpal/go-github"
 
 [[projects]]

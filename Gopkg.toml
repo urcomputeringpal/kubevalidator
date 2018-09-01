@@ -27,7 +27,7 @@
 [[constraint]]
   name = "github.com/google/go-github"
   source = "github.com/urcomputeringpal/go-github"
-  revision = "f67f03765936eb4a6b08a37ea7565f54e795ea23"
+  revision = "8ba654d047b158b6fec86a826e42954647ebb3fb"
 
 [[constraint]]
   name = "github.com/garethr/kubeval"
