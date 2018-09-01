@@ -81,6 +81,7 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 	c := &Context{
 		Event:  event,
 		Ctx:    s.ctx,
+		AppID:  &s.AppID,
 		Github: github.NewClient(&http.Client{Transport: itr}),
 	}
 

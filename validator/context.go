@@ -15,6 +15,7 @@ type Context struct {
 	Event  interface{}
 	Github *github.Client
 	Ctx    *context.Context
+	AppID  *int
 }
 
 // Process handles webhook events kinda like Probot does
