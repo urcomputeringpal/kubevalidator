@@ -27,11 +27,18 @@ func (c *Context) Process() {
 	case *github.PullRequestEvent:
 		prEvent := c.Event.(*github.PullRequestEvent)
 		if *prEvent.Action == "opened" {
-			_, err := c.Github.Checks.RequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), github.RequestCheckSuiteOptions{
-				HeadSHA: prEvent.GetPullRequest().GetHead().GetSHA(),
+			results, _, err := c.Github.Checks.ListCheckSuitesForRef(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), prEvent.PullRequest.Head.GetRef(), &github.ListCheckSuiteOptions{
+				AppID: c.AppID,
 			})
 			if err != nil {
 				log.Printf("%+v\n", err)
+			}
+			if results.GetTotal() == 1 {
+				suite := results.CheckSuites[0]
+				_, err := c.Github.Checks.ReRequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), suite.GetID())
+				if err != nil {
+					log.Printf("%+v\n", err)
+				}
 			}
 		}
 	default:
