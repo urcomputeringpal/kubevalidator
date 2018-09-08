@@ -125,9 +125,9 @@ func (c *Context) ProcessPrEvent(e *github.PullRequestEvent) bool {
 	return false
 }
 
-// ProcessCheckRunEvent re-requests CheckSuites when a conatined CheckRun is re-requested
+// ProcessCheckRunEvent re-requests CheckSuites when a conatined CheckRun is rerequested
 func (c *Context) ProcessCheckRunEvent(e *github.CheckRunEvent) bool {
-	if *e.Action == "re-requested" {
+	if *e.Action == "rerequested" {
 
 		_, err := c.Github.Checks.ReRequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckRun.CheckSuite.GetID())
 		if err != nil {

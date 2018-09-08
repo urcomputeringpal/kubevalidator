@@ -111,7 +111,7 @@ func TestPullRequestTestingTooManyCheckSuites(t *testing.T) {
 
 func TestReRequestedCheckRunReRequestsTheCheckSuite(t *testing.T) {
 	checkRunEvent := &github.CheckRunEvent{
-		Action: github.String("re-requested"),
+		Action: github.String("rerequested"),
 		CheckRun: &github.CheckRun{
 			ID: github.Int64(4),
 			CheckSuite: &github.CheckSuite{
