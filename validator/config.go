@@ -34,7 +34,6 @@ type KubeValidatorConfigSchema struct {
 
 	Version     string `yaml:"version,omitempty"`
 	ConfigType  string `yaml:"type,omitempty"`
-	Strict      bool   `yaml:"strict,omitempty"`
 	LineNumbers bool   `yaml:"lineNumbers,omitempty"`
 }
 

@@ -32,7 +32,6 @@ var (
 		Version:    "master",
 		SchemaFork: "garethr",
 		ConfigType: "kubernetes",
-		Strict:     false,
 	}
 )
 
@@ -89,7 +88,8 @@ func (c *Candidate) Validate() Annotations {
 			kubeval.Version = schema.Version
 		}
 
-		kubeval.Strict = schema.Strict
+		// TODO configurable
+		kubeval.Strict = true
 		if schema.ConfigType == "openstack" {
 			kubeval.OpenShift = true
 		} else {
@@ -101,8 +101,6 @@ func (c *Candidate) Validate() Annotations {
 			schemaName = schema.Name
 		} else if schema.Version != "" {
 			schemaName = schema.Version
-		} else if schema.Strict {
-			schemaName = "strict"
 		} else {
 			schemaName = "default"
 		}

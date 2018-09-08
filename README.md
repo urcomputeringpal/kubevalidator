@@ -39,7 +39,6 @@ spec:
 
     # version: 'master'
     # name: $version
-    # strict: false
 
     # If the schemas at https://github.com/garethr/kubernetes-json-schema
     # don't work for you, fork it and drop your username here! Your schemas
