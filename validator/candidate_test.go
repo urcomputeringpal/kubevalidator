@@ -190,7 +190,7 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 		EndLine:         github.Int(1),
 		AnnotationLevel: github.String("failure"),
 		Title:           github.String("Error validating VolumeError against 1.6.0 schema"),
-		Message:         github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
+		Message:         github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone-strict/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
 	}}
 
 	if len(annotations) != len(want) {
