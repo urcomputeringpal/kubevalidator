@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	checkRunName           = "Kubernetes YAML"
+	checkRunName           = "kubevalidator"
 	initialCheckRunSummary = "Validating..."
 	noMatchingFiles        = "No files to validate"
 	configPath             = ".github/kubevalidator.yaml"

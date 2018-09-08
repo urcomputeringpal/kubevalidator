@@ -21,6 +21,8 @@ type Context struct {
 // Process handles webhook events kinda like Probot does
 func (c *Context) Process() bool {
 	switch e := c.Event.(type) {
+	case *github.InstallationEvent:
+		return c.ProcessInstallationEvent(c.Event.(*github.InstallationEvent))
 	case *github.CheckSuiteEvent:
 		c.ProcessCheckSuite(c.Event.(*github.CheckSuiteEvent))
 		return true
@@ -32,6 +34,24 @@ func (c *Context) Process() bool {
 		log.Printf("ignoring %s\n", reflect.TypeOf(e).String())
 	}
 	return false
+}
+
+// ProcessInstallationEvent helps determine the number of installations
+func (c *Context) ProcessInstallationEvent(e *github.InstallationEvent) bool {
+	installations, _, err := c.Github.Apps.ListInstallations(*c.Ctx, &github.ListOptions{
+		PerPage: 251,
+	})
+	if err != nil {
+		log.Printf("%+v\n", err)
+		return false
+	}
+	installationCount := len(installations)
+	if installationCount > 250 {
+		log.Printf("%+v installations. get thee to the market!", installationCount)
+	} else {
+		log.Printf("%+v installations. keep it up!", installationCount)
+	}
+	return true
 }
 
 // ProcessCheckSuite validates the Kubernetes YAML that has changed on checks
