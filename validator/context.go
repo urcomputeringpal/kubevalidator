@@ -28,6 +28,8 @@ func (c *Context) Process() bool {
 		return true
 	case *github.PullRequestEvent:
 		return c.ProcessPrEvent(c.Event.(*github.PullRequestEvent))
+	case *github.CheckRunEvent:
+		return c.ProcessCheckRunEvent(c.Event.(*github.CheckRunEvent))
 	default:
 		log.Printf("ignoring %s\n", reflect.TypeOf(e).String())
 	}
@@ -119,6 +121,20 @@ func (c *Context) ProcessPrEvent(e *github.PullRequestEvent) bool {
 			}
 			return true
 		}
+	}
+	return false
+}
+
+// ProcessCheckRunEvent re-requests CheckSuites when a conatined CheckRun is rerequested
+func (c *Context) ProcessCheckRunEvent(e *github.CheckRunEvent) bool {
+	if *e.Action == "rerequested" {
+
+		_, err := c.Github.Checks.ReRequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckRun.CheckSuite.GetID())
+		if err != nil {
+			log.Printf("%+v\n", err)
+			return false
+		}
+		return true
 	}
 	return false
 }

@@ -108,3 +108,40 @@ func TestPullRequestTestingTooManyCheckSuites(t *testing.T) {
 	}
 	return
 }
+
+func TestReRequestedCheckRunReRequestsTheCheckSuite(t *testing.T) {
+	checkRunEvent := &github.CheckRunEvent{
+		Action: github.String("rerequested"),
+		CheckRun: &github.CheckRun{
+			ID: github.Int64(4),
+			CheckSuite: &github.CheckSuite{
+				ID:         github.Int64(5),
+				HeadBranch: github.String("b"),
+			},
+		},
+		Repo: &github.Repository{
+			Owner: &github.User{
+				Login: github.String("o"),
+			},
+			Name: github.String("r"),
+		},
+	}
+	client, mux, _, teardown := setup()
+	ctx := context.Background()
+	context := &Context{
+		Ctx:    &ctx,
+		Event:  checkRunEvent,
+		Github: client,
+		AppID:  github.Int(1),
+	}
+	defer teardown()
+	mux.HandleFunc("/repos/o/r/check-suites/5/rerequest", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "POST")
+		testBody(t, r, "")
+	})
+	processed := context.Process()
+	if !processed {
+		t.Error("PR event was never processed")
+	}
+	return
+}
