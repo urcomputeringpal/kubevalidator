@@ -38,10 +38,9 @@ spec:
     #
 
     # version: 'master'
-    # name: $version
-    # strict: false
+    # name: 'human readable name' # defaults to the value of version
 
-    # If the schemas at https://github.com/garethr/kubernetes-json-schema
+    # If the schemas in https://github.com/garethr/kubernetes-json-schema
     # don't work for you, fork it and drop your username here! Your schemas
     # will be used instead.
     #
