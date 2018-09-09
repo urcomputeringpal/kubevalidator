@@ -66,6 +66,7 @@ func (c *Context) createConfigMissingCheckRun(startedAt *time.Time, e *github.Ch
 }
 
 func (c *Context) createConfigInvalidCheckRun(startedAt *time.Time, e *github.CheckSuiteEvent, annotations []*github.CheckRunAnnotation) error {
+	configURL := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadBranch(), configPath)
 	checkRunOpt := github.CreateCheckRunOptions{
 		Name:        checkRunName,
 		HeadBranch:  e.CheckSuite.GetHeadBranch(),
@@ -76,7 +77,7 @@ func (c *Context) createConfigInvalidCheckRun(startedAt *time.Time, e *github.Ch
 		CompletedAt: &github.Timestamp{Time: time.Now()},
 		Output: &github.CheckRunOutput{
 			Title:       github.String("Configuration invalid"),
-			Summary:     github.String(fmt.Sprintf("kubevalidator needs a tiny bit of configuration to know where to find the Kubernetes YAML in your Repository.\n\n1. Check out the [documentation and examples](https://github.com/urcomputeringpal/kubevalidator#configuration).\n1. Add your configuration to [`.github/kubevalidator.yaml`](https://github.com/%s/%s/new/%s?filename=.github/kubevalidator.yaml)\n1. Profit???", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadBranch())),
+			Summary:     github.String(fmt.Sprintf("Check out the [documentation and examples](https://github.com/urcomputeringpal/kubevalidator#configuration) and [update your configuration to match](%v). Please do [reach out](https://github.com/urcomputeringpal/kubevalidator/issues/new/choose) if you're having trouble or think you've have found a bug!", configURL)),
 			Annotations: annotations,
 		},
 	}
@@ -98,8 +99,8 @@ func (c *Context) createFinalCheckRun(startedAt *time.Time, e *github.CheckSuite
 	if numFiles == 0 {
 		checkRunConclusion = "neutral"
 		checkRunText = noMatchingFiles
-		configURL := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadSHA(), configPath)
-		checkRunSummary = fmt.Sprintf("To save CPU resources, kubevalidator only validates changes to files that a) are associated with an open Pull Request and b) match the configuration in [`%s`](%s).", configPath, configURL)
+		configURL := fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckSuite.GetHeadBranch(), configPath)
+		checkRunSummary = fmt.Sprintf("None of the files changed on this Pull Request matched the configuration in [`%s`](%s). Please do [reach out](https://github.com/urcomputeringpal/kubevalidator/issues/new/choose) if you're having trouble or think you've have found a bug!", configPath, configURL)
 	} else {
 		// MVP pluralization
 		filesString := "files"

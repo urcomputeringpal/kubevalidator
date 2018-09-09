@@ -4,7 +4,7 @@ A GitHub App that validates the Kubernetes YAML in your GitHub PRs using [kubeva
 
 ### Example
 
-![example](https://user-images.githubusercontent.com/47/44115902-e577ab0e-9fc3-11e8-9d10-6243a574e8f4.png)
+![](https://urcomputeringpal.com/assets/kubevalidator.gif)
 
 ### Goals
 
@@ -38,9 +38,9 @@ spec:
     #
 
     # version: 'master'
-    # name: $version
+    # name: 'human readable name' # defaults to the value of version
 
-    # If the schemas at https://github.com/garethr/kubernetes-json-schema
+    # If the schemas in https://github.com/garethr/kubernetes-json-schema
     # don't work for you, fork it and drop your username here! Your schemas
     # will be used instead.
     #
