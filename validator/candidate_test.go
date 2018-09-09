@@ -76,9 +76,7 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 }
 
 func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
-	schema := &KubeValidatorConfigSchema{
-		Strict: true,
-	}
+	schema := &KubeValidatorConfigSchema{}
 	var schemas []*KubeValidatorConfigSchema
 	schemas = append(schemas, schema)
 	candidate := NewCandidate(
@@ -102,7 +100,7 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against strict schema"),
+			Title:           github.String("Error validating Deployment against default schema"),
 			Message:         github.String("extra: Additional property extra is not allowed"),
 			RawDetails:      github.String("* context: (root).spec\n* field: extra\n* property: extra\n"),
 		},
@@ -112,7 +110,7 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against strict schema"),
+			Title:           github.String("Error validating Deployment against default schema"),
 			Message:         github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
 			RawDetails:      github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 		},
@@ -122,7 +120,7 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against strict schema"),
+			Title:           github.String("Error validating Deployment against default schema"),
 			Message:         github.String("extra-container: Additional property extra-container is not allowed"),
 			RawDetails:      github.String("* context: (root).spec.template.spec.containers.0\n* field: extra-container\n* property: extra-container\n"),
 		},
@@ -192,7 +190,7 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 		EndLine:         github.Int(1),
 		AnnotationLevel: github.String("failure"),
 		Title:           github.String("Error validating VolumeError against 1.6.0 schema"),
-		Message:         github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
+		Message:         github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone-strict/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
 	}}
 
 	if len(annotations) != len(want) {

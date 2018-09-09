@@ -102,9 +102,7 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 
 	ctx := context.Background()
 
-	schema := &KubeValidatorConfigSchema{
-		Strict: true,
-	}
+	schema := &KubeValidatorConfigSchema{}
 	var schemas []*KubeValidatorConfigSchema
 	schemas = append(schemas, schema)
 
@@ -144,7 +142,7 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against strict schema"),
+			Title:           github.String("Error validating Deployment against default schema"),
 			Message:         github.String("extra: Additional property extra is not allowed"),
 			RawDetails:      github.String("* context: (root).spec\n* field: extra\n* property: extra\n"),
 		},
@@ -154,7 +152,7 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against strict schema"),
+			Title:           github.String("Error validating Deployment against default schema"),
 			Message:         github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
 			RawDetails:      github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 		},
@@ -164,7 +162,7 @@ func TestLoadingCandidatesBytesFromGitHub(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against strict schema"),
+			Title:           github.String("Error validating Deployment against default schema"),
 			Message:         github.String("extra-container: Additional property extra-container is not allowed"),
 			RawDetails:      github.String("* context: (root).spec.template.spec.containers.0\n* field: extra-container\n* property: extra-container\n"),
 		},
@@ -207,7 +205,6 @@ func TestLineNumbers(t *testing.T) {
 			ctx := context.Background()
 
 			schema := &KubeValidatorConfigSchema{
-				Strict:      true,
 				LineNumbers: true,
 			}
 			var schemas []*KubeValidatorConfigSchema
