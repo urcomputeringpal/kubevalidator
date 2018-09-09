@@ -71,18 +71,21 @@ func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO what happens if the event doesn't have an installation ID?
-	itr, err := ghinstallation.NewKeyFromFile(*s.tr, s.AppID, int(ge.Installation.GetID()), s.PrivateKeyFile)
-	if err != nil {
-		log.Println(err)
-		return
+	var installationTransport *ghinstallation.Transport
+	if ge.Installation != nil {
+		installationTransport, err = ghinstallation.NewKeyFromFile(*s.tr, s.AppID, int(ge.Installation.GetID()), s.PrivateKeyFile)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 
 	c := &Context{
-		Event:  event,
-		Ctx:    s.ctx,
-		AppID:  &s.AppID,
-		Github: github.NewClient(&http.Client{Transport: itr}),
+		Event:     event,
+		Ctx:       s.ctx,
+		AppID:     &s.AppID,
+		Github:    github.NewClient(&http.Client{Transport: installationTransport}),
+		AppGitHub: s.GitHubAppClient,
 	}
 
 	// TODO Return a 500 if we don't make it through the complete CheckRun cycle
