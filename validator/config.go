@@ -44,6 +44,7 @@ func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []
 		if config.Spec != nil {
 			spec := *config.Spec
 			for _, manifestConfig := range spec.Manifests {
+				// doublestar because we're used to bash, yo
 				if matched, _ := doublestar.Match(manifestConfig.Glob, file.GetFilename()); matched {
 					candidate := NewCandidate(context, file, manifestConfig.Schemas)
 					candidates = append(candidates, candidate)
