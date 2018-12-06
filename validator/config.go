@@ -2,10 +2,10 @@ package validator
 
 import (
 	"fmt"
-	"path"
 	"regexp"
 
 	"github.com/google/go-github/github"
+	"github.com/bmatcuk/doublestar"
 )
 
 // KubeValidatorConfig maps globs of Kubernetes config to schemas which validate
@@ -44,7 +44,7 @@ func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []
 		if config.Spec != nil {
 			spec := *config.Spec
 			for _, manifestConfig := range spec.Manifests {
-				if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
+				if matched, _ := doublestar.Match(manifestConfig.Glob, file.GetFilename()); matched {
 					candidate := NewCandidate(context, file, manifestConfig.Schemas)
 					candidates = append(candidates, candidate)
 				}
