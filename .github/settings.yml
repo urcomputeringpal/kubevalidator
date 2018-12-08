@@ -19,5 +19,4 @@ branches:
         - kubevalidator
         - YAMBURGER
         - Build
-        - WIP
       restrictions: null
