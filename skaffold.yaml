@@ -1,8 +1,8 @@
-apiVersion: skaffold/v1alpha2
+apiVersion: skaffold/v1alpha5
 kind: Config
 build:
   artifacts:
-  - imageName: gcr.io/urcomputeringpal-public/kubevalidator
+  - image: gcr.io/urcomputeringpal-public/kubevalidator
 deploy:
   kubectl:
     manifests:
