@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:7294028ae4f4ebe9f92dccabdc69f63eba37b71fbfcdcb35ed1c32eb823fc6d4"
+  name = "github.com/bmatcuk/doublestar"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "85a78806aa1b4707d1dbace9be592cf1ece91ab3"
+
+[[projects]]
   digest = "1:a3998b8ea2d61301e5dce8de279e789da031fb36cd98b374e7299591609c34f1"
   name = "github.com/bradleyfalzon/ghinstallation"
   packages = ["."]
@@ -267,6 +275,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/bmatcuk/doublestar",
     "github.com/bradleyfalzon/ghinstallation",
     "github.com/garethr/kubeval/kubeval",
     "github.com/go-test/deep",

@@ -53,3 +53,7 @@
   name = "gopkg.in/yaml.v2"
   version = "2.2.1"
   source = "github.com/go-yaml/yaml"
+
+[[constraint]]
+  name = "github.com/bmatcuk/doublestar"
+  branch = "master"
