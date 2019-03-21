@@ -90,6 +90,7 @@ kubectl create secret generic kubeval
 * Configure access to a Kubernetes cluster.
 * Create a `kubevalidator` namespace on that cluster.
 * Install [Skaffold](https://github.com/GoogleContainerTools/skaffold).
+* Point `build.artifacts[0].image` in skaffold.yaml to an accessible docker image path 
 * Run `skaffold run` to deploy this application to your cluster!
 
 ## Acknowledgements
