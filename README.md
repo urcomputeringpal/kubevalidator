@@ -79,7 +79,7 @@ These instructions are untested. Please open a new issue or PR if you run into a
 * Create a secret with values to authenticate your instance of kubevalidator as your GitHub app
 
 ```
-kubectl create secret generic kubeval
+kubectl create secret generic kubevalidator
     --from-file=PRIVATE_KEY=~/Downloads/path-to-kubeval-key.pem \
     --from-literal=APP_ID=1234 \
     --from-literal=WEBHOOK_SECRET=1234 \
