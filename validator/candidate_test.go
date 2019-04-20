@@ -199,8 +199,8 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 		StartLine:       github.Int(1),
 		EndLine:         github.Int(1),
 		AnnotationLevel: github.String("failure"),
-		Title:           github.String("Error validating Deployment against 1.99.1 schema"),
-		Message:         github.String("1 error occurred:\n\t* Problem loading schema from the network at https://kubernetesjsonschema.dev/v1.99.1-standalone-strict/deployment-apps-v1.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
+		Title:           github.String("Internal error when validating Deployment against 1.99.1 schemas from https://kubernetesjsonschema.dev"),
+		Message:         github.String("This may indicate an incorrect 'apiVersion' or 'kind' field, a missing upstream schema version, or an intermittent error. Details:\n\nProblem loading schema from the network at https://kubernetesjsonschema.dev/v1.99.1-standalone-strict/deployment-apps-v1.json: Could not read schema from HTTP, response status is 404 Not Found"),
 	}}
 
 	if len(annotations) != len(want) {

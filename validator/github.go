@@ -210,7 +210,19 @@ func (c *Context) changedFileList(e *github.CheckSuiteEvent) ([]*github.CommitFi
 		if prListErr != nil {
 			return nil, errors.Wrap(prListErr, "Couldn't list files")
 		}
-		prFiles = append(prFiles, files...)
+		for _, file := range files {
+			switch status := file.GetStatus(); status {
+			// skip files that weren't added or changed
+			case "removed":
+				continue
+			case "renamed":
+				continue
+			default:
+				prFiles = append(prFiles, file)
+			}
+
+		}
+
 	}
 	return prFiles, nil
 }
