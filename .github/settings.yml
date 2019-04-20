@@ -10,13 +10,12 @@ repository:
 branches:
   - name: master
     protection:
-      required_pull_request_reviews:
-        require_code_owner_reviews: true
-        dismiss_stale_reviews: true
+      required_pull_request_reviews: null
       required_status_checks:
         strict: true
         contexts:
-        - kubevalidator
         - YAMBURGER
-        - Build
+        - kubevalidator
+        - Build (677203284384)
+      enforce_admins: false
       restrictions: null
