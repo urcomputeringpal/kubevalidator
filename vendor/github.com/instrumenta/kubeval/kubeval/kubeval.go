@@ -23,7 +23,10 @@ var Version string
 var SchemaLocation string
 
 // DefaultSchemaLocation is the default value for
-var DefaultSchemaLocation = "https://raw.githubusercontent.com/garethr"
+var DefaultSchemaLocation = "https://kubernetesjsonschema.dev"
+
+// OpenShiftSchemaLocation is the alternative location for OpenShift specific schemas
+var OpenShiftSchemaLocation = "https://raw.githubusercontent.com/garethr/openshift-json-schema/master"
 
 // OpenShift represents whether to test against
 // upstream Kubernetes of the OpenShift schemas
@@ -46,9 +49,10 @@ func (f ValidFormat) IsFormat(input interface{}) bool {
 // ValidationResult contains the details from
 // validating a given Kubernetes resource
 type ValidationResult struct {
-	FileName string
-	Kind     string
-	Errors   []gojsonschema.ResultError
+	FileName   string
+	Kind       string
+	APIVersion string
+	Errors     []gojsonschema.ResultError
 }
 
 // detectLineBreak returns the relevant platform specific line ending
@@ -60,16 +64,10 @@ func detectLineBreak(haystack []byte) string {
 	return "\n"
 }
 
-func determineSchema(kind string) string {
+func determineSchema(kind string, apiVersion string) string {
 	// We have both the upstream Kubernetes schemas and the OpenShift schemas available
 	// the tool can toggle between then using the --openshift boolean flag and here we
 	// use that to select which repository to get the schema from
-	var schemaType string
-	if OpenShift {
-		schemaType = "openshift"
-	} else {
-		schemaType = "kubernetes"
-	}
 
 	// Set a default Version to make usage as a library easier
 	if Version == "" {
@@ -90,7 +88,11 @@ func determineSchema(kind string) string {
 	if baseURLFromEnv != "" {
 		baseURL = baseURLFromEnv
 	} else if SchemaLocation == "" {
-		baseURL = DefaultSchemaLocation
+		if OpenShift {
+			baseURL = OpenShiftSchemaLocation
+		} else {
+			baseURL = DefaultSchemaLocation
+		}
 	} else {
 		baseURL = SchemaLocation
 	}
@@ -102,7 +104,22 @@ func determineSchema(kind string) string {
 		strictSuffix = ""
 	}
 
-	return fmt.Sprintf("%s/%s-json-schema/master/%s-standalone%s/%s.json", baseURL, schemaType, normalisedVersion, strictSuffix, strings.ToLower(kind))
+	var kindSuffix string
+
+	groupParts := strings.Split(apiVersion, "/")
+	versionParts := strings.Split(groupParts[0], ".")
+
+	if OpenShift {
+		kindSuffix = ""
+	} else {
+		if len(groupParts) == 1 {
+			kindSuffix = "-" + strings.ToLower(versionParts[0])
+		} else {
+			kindSuffix = fmt.Sprintf("-%s-%s", strings.ToLower(versionParts[0]), strings.ToLower(groupParts[1]))
+		}
+	}
+
+	return fmt.Sprintf("%s/%s-standalone%s/%s%s.json", baseURL, normalisedVersion, strictSuffix, strings.ToLower(kind), kindSuffix)
 }
 
 func determineKind(body interface{}) (string, error) {
@@ -110,8 +127,21 @@ func determineKind(body interface{}) (string, error) {
 	if _, ok := cast["kind"]; !ok {
 		return "", errors.New("Missing a kind key")
 	}
-
+	if cast["kind"] == nil {
+		return "", errors.New("Missing a kind value")
+	}
 	return cast["kind"].(string), nil
+}
+
+func determineAPIVersion(body interface{}) (string, error) {
+	cast, _ := body.(map[string]interface{})
+	if _, ok := cast["apiVersion"]; !ok {
+		return "", errors.New("Missing a apiVersion key")
+	}
+	if cast["apiVersion"] == nil {
+		return "", errors.New("Missing a apiVersion value")
+	}
+	return cast["apiVersion"].(string), nil
 }
 
 // validateResource validates a single Kubernetes resource against
@@ -126,6 +156,16 @@ func validateResource(data []byte, fileName string) (ValidationResult, error) {
 	}
 
 	body := convertToStringKeys(spec)
+
+	if body == nil {
+		return result, nil
+	}
+
+	cast, _ := body.(map[string]interface{})
+	if len(cast) == 0 {
+		return result, nil
+	}
+
 	documentLoader := gojsonschema.NewGoLoader(body)
 
 	kind, err := determineKind(body)
@@ -133,7 +173,14 @@ func validateResource(data []byte, fileName string) (ValidationResult, error) {
 		return result, err
 	}
 	result.Kind = kind
-	schema := determineSchema(kind)
+
+	apiVersion, err := determineAPIVersion(body)
+	if err != nil {
+		return result, err
+	}
+	result.APIVersion = apiVersion
+
+	schema := determineSchema(kind, apiVersion)
 
 	schemaLoader := gojsonschema.NewReferenceLoader(schema)
 
@@ -161,13 +208,17 @@ func validateResource(data []byte, fileName string) (ValidationResult, error) {
 // and validating them all according to the  relevant schemas
 // TODO This function requires a judicious amount of refactoring.
 func Validate(config []byte, fileName string) ([]ValidationResult, error) {
+	results := make([]ValidationResult, 0)
+
 	if len(config) == 0 {
-		return nil, errors.New("The document " + fileName + " appears to be empty")
+		result := ValidationResult{}
+		result.FileName = fileName
+		results = append(results, result)
+		return results, nil
 	}
 
 	bits := bytes.Split(config, []byte(detectLineBreak(config)+"---"+detectLineBreak(config)))
 
-	results := make([]ValidationResult, 0)
 	var errors *multierror.Error
 	for _, element := range bits {
 		if len(element) > 0 {
@@ -176,6 +227,10 @@ func Validate(config []byte, fileName string) ([]ValidationResult, error) {
 			if err != nil {
 				errors = multierror.Append(errors, err)
 			}
+		} else {
+			result := ValidationResult{}
+			result.FileName = fileName
+			results = append(results, result)
 		}
 	}
 	return results, errors.ErrorOrNil()
