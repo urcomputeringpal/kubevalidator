@@ -1,0 +1,9 @@
+# 6-7 7-8
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubevalidator
+  namespace: kubevalidator
+spec:
+  replicas: asdf
+  template: {}

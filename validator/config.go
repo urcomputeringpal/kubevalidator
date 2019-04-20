@@ -2,10 +2,11 @@ package validator
 
 import (
 	"fmt"
-	"path"
 	"regexp"
 
+	"github.com/bmatcuk/doublestar"
 	"github.com/google/go-github/github"
+	"github.com/instrumenta/kubeval/kubeval"
 )
 
 // KubeValidatorConfig maps globs of Kubernetes config to schemas which validate
@@ -32,29 +33,27 @@ type KubeValidatorConfigSchema struct {
 	Name       string `yaml:"name,omitempty"`
 	SchemaFork string `yaml:"schemaFork,omitempty"`
 
-	Version    string `yaml:"version,omitempty"`
-	ConfigType string `yaml:"type,omitempty"`
-	Strict     bool   `yaml:"strict,omitempty"`
+	Version     string `yaml:"version,omitempty"`
+	ConfigType  string `yaml:"type,omitempty"`
+	LineNumbers bool   `yaml:"lineNumbers,omitempty"`
 }
 
-func (config *KubeValidatorConfig) matchingCandidates(files []*github.CommitFile) map[string]*Candidate {
-	filesToValidate := make(map[string]*Candidate)
+func (config *KubeValidatorConfig) matchingCandidates(context *Context, files []*github.CommitFile) []*Candidate {
+	var candidates []*Candidate
 
 	for _, file := range files {
 		if config.Spec != nil {
 			spec := *config.Spec
 			for _, manifestConfig := range spec.Manifests {
-				if matched, _ := path.Match(manifestConfig.Glob, file.GetFilename()); matched {
-					filesToValidate[file.GetFilename()] = &Candidate{
-						File:    file,
-						Schemas: manifestConfig.Schemas,
-					}
+				if matched, _ := doublestar.Match(manifestConfig.Glob, file.GetFilename()); matched {
+					candidate := NewCandidate(context, file, manifestConfig.Schemas)
+					candidates = append(candidates, candidate)
 				}
 			}
 		}
 	}
 
-	return filesToValidate
+	return candidates
 }
 
 // Valid returns a boolean indicatating whether or not the config is well formed
@@ -78,7 +77,7 @@ func (config *KubeValidatorConfig) Valid() bool {
 func (schema *KubeValidatorConfigSchema) SchemaLocation() string {
 	schemaFork := schema.SchemaFork
 	if schemaFork == "" {
-		schemaFork = "garethr"
+		return kubeval.DefaultSchemaLocation
 	}
-	return fmt.Sprintf("https://raw.githubusercontent.com/%s", schemaFork)
+	return fmt.Sprintf("https://raw.githubusercontent.com/%s/kubernetes-json-schema/master", schemaFork)
 }

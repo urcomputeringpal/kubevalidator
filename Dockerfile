@@ -4,8 +4,8 @@ WORKDIR /go/src/github.com/urcomputeringpal/kubevalidator
 COPY ./vendor ./vendor
 RUN go install -v ./vendor/...
 COPY . .
-RUN go test -v github.com/urcomputeringpal/kubevalidator/...
-RUN go install -v github.com/urcomputeringpal/kubevalidator
+RUN CGO_ENABLED=0 go test -v github.com/urcomputeringpal/kubevalidator/...
+RUN CGO_ENABLED=0 go install -v github.com/urcomputeringpal/kubevalidator
 
 
 FROM alpine

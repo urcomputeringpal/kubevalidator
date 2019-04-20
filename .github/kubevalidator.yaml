@@ -4,5 +4,4 @@ spec:
   manifests:
   - glob: config/kubernetes/default/*/*.yaml
     schemas:
-    - version: 1.10.0
-      strict: true
+    - version: 1.13.0

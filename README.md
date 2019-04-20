@@ -4,7 +4,7 @@ A GitHub App that validates the Kubernetes YAML in your GitHub PRs using [kubeva
 
 ### Example
 
-![example](https://user-images.githubusercontent.com/47/44115902-e577ab0e-9fc3-11e8-9d10-6243a574e8f4.png)
+![](https://urcomputeringpal.com/assets/kubevalidator.gif)
 
 ### Goals
 
@@ -31,17 +31,16 @@ spec:
   manifests:
   - glob: config/kubernetes/default/*/*.yaml
     schemas:
-    - version: 1.10.0
-    - version: 1.10.1
+    - version: 1.13.0
+    - version: 1.13.3
     #
     # Schema options and their defaults. See config.go for more details.
     #
 
     # version: 'master'
-    # name: $version
-    # strict: false
+    # name: 'human readable name' # defaults to the value of version
 
-    # If the schemas at https://github.com/garethr/kubernetes-json-schema
+    # If the schemas in https://github.com/garethr/kubernetes-json-schema
     # don't work for you, fork it and drop your username here! Your schemas
     # will be used instead.
     #
@@ -80,7 +79,7 @@ These instructions are untested. Please open a new issue or PR if you run into a
 * Create a secret with values to authenticate your instance of kubevalidator as your GitHub app
 
 ```
-kubectl create secret generic kubeval
+kubectl create secret generic kubevalidator
     --from-file=PRIVATE_KEY=~/Downloads/path-to-kubeval-key.pem \
     --from-literal=APP_ID=1234 \
     --from-literal=WEBHOOK_SECRET=1234 \
@@ -91,6 +90,7 @@ kubectl create secret generic kubeval
 * Configure access to a Kubernetes cluster.
 * Create a `kubevalidator` namespace on that cluster.
 * Install [Skaffold](https://github.com/GoogleContainerTools/skaffold).
+* Point `build.artifacts[0].image` in skaffold.yaml to an accessible docker image path, and make sure it matches the image specified in the `kubernetes/default/deployments/kubevalidator.yaml` deployment manifest 
 * Run `skaffold run` to deploy this application to your cluster!
 
 ## Acknowledgements

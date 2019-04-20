@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:7294028ae4f4ebe9f92dccabdc69f63eba37b71fbfcdcb35ed1c32eb823fc6d4"
+  name = "github.com/bmatcuk/doublestar"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "85a78806aa1b4707d1dbace9be592cf1ece91ab3"
+
+[[projects]]
   digest = "1:a3998b8ea2d61301e5dce8de279e789da031fb36cd98b374e7299591609c34f1"
   name = "github.com/bradleyfalzon/ghinstallation"
   packages = ["."]
@@ -26,14 +34,6 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:05fb788b2944ec4532160546f534d59198215ab6b29b267eb219434dfb066970"
-  name = "github.com/garethr/kubeval"
-  packages = ["kubeval"]
-  pruneopts = "NUT"
-  revision = "36730fe8f35d69c920a790c1be126ac37cbaabb8"
-  version = "0.7.1"
-
-[[projects]]
   branch = "master"
   digest = "1:e74a21fe7fdc7fed3a36231d0321297c66b77e76d941f33fd6a7ec6664b21218"
   name = "github.com/go-test/deep"
@@ -42,11 +42,19 @@
   revision = "57af0be209c537ba1d9c2a4b285ab7aea0897e51"
 
 [[projects]]
-  digest = "1:3b53751e52bd3b7b782ff3b78971457c52537a745dd1f7c272206b6e56c31465"
+  digest = "1:38e684375ef5b55e812332266d63f9fc5b6329ab303067c4cdda051db6d29ca4"
+  name = "github.com/gogo/protobuf"
+  packages = ["proto"]
+  pruneopts = "NUT"
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
+
+[[projects]]
+  digest = "1:4dd8823d2cf1ddd286ac29d20745d8c332eba4cfcfa49807246e15a13ccbd5cc"
   name = "github.com/google/go-github"
   packages = ["github"]
   pruneopts = "NUT"
-  revision = "f67f03765936eb4a6b08a37ea7565f54e795ea23"
+  revision = "8ba654d047b158b6fec86a826e42954647ebb3fb"
   source = "github.com/urcomputeringpal/go-github"
 
 [[projects]]
@@ -93,6 +101,22 @@
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
+  digest = "1:dc4866b4ae1bd3f86f1354973fe8c98c59e3cb66b93199f5e7fe7e898bd27b5a"
+  name = "github.com/instrumenta/kubeval"
+  packages = ["kubeval"]
+  pruneopts = "NUT"
+  revision = "ae5764e6b2ed4bbbce11d2ca9f130be4515cd9f3"
+  version = "0.9.2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:3aeab0dee856f61a78f36d6dfc00e0634682e4e05cd39faf31a80ace21883751"
+  name = "github.com/krishicks/yaml-patch"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "94f42521ff99ba62ddeca5ddae47264ade0b8df6"
+
+[[projects]]
   digest = "1:d244f8666a838fe6ad70ec8fe77f50ebc29fdc3331a2729ba5886bef8435d10d"
   name = "github.com/magiconair/properties"
   packages = ["."]
@@ -123,6 +147,14 @@
   pruneopts = "NUT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  pruneopts = "NUT"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
 
 [[projects]]
   digest = "1:330e9062b308ac597e28485699c02223bd052437a6eed32a173c9227dcb9d95a"
@@ -220,18 +252,40 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  source = "github.com/go-yaml/yaml"
   version = "v2.2.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:17f57ca0d1ba2c234063d64ffd589c349eb00cc3dc211df50f47e81f3d971589"
+  name = "sourcegraph.com/sourcegraph/go-diff"
+  packages = ["diff"]
+  pruneopts = "NUT"
+  revision = "3f415a150aec0685cb81b73cc201e762e075006d"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6b1ed3514b803e40c881e6c432da3a339c5bbfb7a267b9906e77bb0c408eae77"
+  name = "sourcegraph.com/sqs/pbtypes"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "d3ebe8f20ae404b082e57662738480545bc2ad3d"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/bmatcuk/doublestar",
     "github.com/bradleyfalzon/ghinstallation",
-    "github.com/garethr/kubeval/kubeval",
     "github.com/go-test/deep",
     "github.com/google/go-github/github",
+    "github.com/instrumenta/kubeval/kubeval",
+    "github.com/krishicks/yaml-patch",
     "github.com/pkg/errors",
+    "github.com/pmezard/go-difflib/difflib",
+    "github.com/xeipuuv/gojsonschema",
     "gopkg.in/yaml.v2",
+    "sourcegraph.com/sourcegraph/go-diff/diff",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

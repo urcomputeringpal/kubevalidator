@@ -2,7 +2,6 @@ package validator
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"reflect"
 	"time"
@@ -13,31 +12,41 @@ import (
 
 // Context contains an event payload an a configured client
 type Context struct {
-	Event  interface{}
-	Github *github.Client
-	Ctx    *context.Context
+	Event     interface{}
+	Github    *github.Client
+	Ctx       *context.Context
+	AppID     *int
+	AppGitHub *github.Client
 }
 
 // Process handles webhook events kinda like Probot does
-func (c *Context) Process() {
+func (c *Context) Process() bool {
 	switch e := c.Event.(type) {
 	case *github.CheckSuiteEvent:
 		c.ProcessCheckSuite(c.Event.(*github.CheckSuiteEvent))
-		return
+		return true
 	case *github.PullRequestEvent:
-		prEvent := c.Event.(*github.PullRequestEvent)
-		if *prEvent.Action == "opened" {
-			_, err := c.Github.Checks.RequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), github.RequestCheckSuiteOptions{
-				HeadSHA: prEvent.GetPullRequest().GetHead().GetSHA(),
-			})
-			if err != nil {
-				log.Printf("%+v\n", err)
-			}
+		return c.ProcessPrEvent(c.Event.(*github.PullRequestEvent))
+	case *github.CheckRunEvent:
+		return c.ProcessCheckRunEvent(c.Event.(*github.CheckRunEvent))
+	case *github.InstallationEvent:
+		err := c.LogInstallationCount()
+		if err != nil {
+			log.Printf("%+v\n", err)
+			return false
 		}
+		return true
+	case *github.InstallationRepositoriesEvent:
+		err := c.LogInstallationCount()
+		if err != nil {
+			log.Printf("%+v\n", err)
+			return false
+		}
+		return true
 	default:
 		log.Printf("ignoring %s\n", reflect.TypeOf(e).String())
-		return
 	}
+	return false
 }
 
 // ProcessCheckSuite validates the Kubernetes YAML that has changed on checks
@@ -53,7 +62,7 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 
 		checkRunStart := time.Now()
 		var annotations []*github.CheckRunAnnotation
-		var filesToValidate map[string]*Candidate
+		var candidates Candidates
 
 		config, configAnnotation, err := c.kubeValidatorConfigOrAnnotation(e)
 		if err != nil {
@@ -74,37 +83,12 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 			return
 		}
 
-		filesToValidate = config.matchingCandidates(changedFileList)
-
-		// Validate the files
-		for filename, file := range filesToValidate {
-			bytes, err := c.bytesForFilename(e, filename)
-			if err != nil {
-				annotations = append(annotations, &github.CheckRunAnnotation{
-					FileName:     file.File.Filename,
-					BlobHRef:     file.File.BlobURL,
-					StartLine:    github.Int(1),
-					EndLine:      github.Int(1),
-					WarningLevel: github.String("failure"),
-					Title:        github.String(fmt.Sprintf("Error loading %s from GitHub", *file.File.Filename)),
-					Message:      github.String(fmt.Sprintf("%+v", err)),
-				})
-			}
-
-			if file.Schemas == nil {
-				fileAnnotations := AnnotateFile(bytes, file.File)
-				annotations = append(annotations, fileAnnotations...)
-			}
-
-			for _, schema := range file.Schemas {
-				fileAnnotations := AnnotateFileWithSchema(bytes, file.File, schema)
-				annotations = append(annotations, fileAnnotations...)
-			}
-
-		}
+		candidates = config.matchingCandidates(c, changedFileList)
+		annotations = append(annotations, candidates.LoadBytes()...)
+		annotations = append(annotations, candidates.Validate()...)
 
 		// Annotate the PR
-		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, filesToValidate, annotations)
+		finalCheckRunErr := c.createFinalCheckRun(&checkRunStart, e, candidates, annotations)
 		if finalCheckRunErr != nil {
 			// TODO return a 500 to signal that retry is preferred
 			log.Println(errors.Wrap(finalCheckRunErr, "Couldn't create check run"))
@@ -112,4 +96,59 @@ func (c *Context) ProcessCheckSuite(e *github.CheckSuiteEvent) {
 		}
 	}
 	return
+}
+
+// ProcessPrEvent re-requests check suites on PRs when they're opened or re-opened
+func (c *Context) ProcessPrEvent(e *github.PullRequestEvent) bool {
+	if *e.Action == "opened" || *e.Action == "reopened" {
+
+		results, _, err := c.Github.Checks.ListCheckSuitesForRef(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.PullRequest.Head.GetRef(), &github.ListCheckSuiteOptions{
+			AppID: c.AppID,
+		})
+		if err != nil {
+			log.Printf("%+v\n", err)
+		}
+		if results.GetTotal() == 1 {
+			suite := results.CheckSuites[0]
+			_, err := c.Github.Checks.ReRequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), suite.GetID())
+			if err != nil {
+				log.Printf("%+v\n", err)
+			}
+			return true
+		}
+	}
+	return false
+}
+
+// ProcessCheckRunEvent re-requests CheckSuites when a conatined CheckRun is rerequested
+func (c *Context) ProcessCheckRunEvent(e *github.CheckRunEvent) bool {
+	if *e.Action == "rerequested" {
+
+		_, err := c.Github.Checks.ReRequestCheckSuite(*c.Ctx, e.Repo.GetOwner().GetLogin(), e.Repo.GetName(), e.CheckRun.CheckSuite.GetID())
+		if err != nil {
+			log.Printf("%+v\n", err)
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+// LogInstallationCount logs the number of installations to help keep track of
+// eligibility for inclusion in the GitHub Marketplace.
+// https://developer.github.com/apps/marketplace/creating-and-submitting-your-app-for-approval/requirements-for-listing-an-app-on-github-marketplace/
+func (c *Context) LogInstallationCount() error {
+	installations, _, err := c.AppGitHub.Apps.ListInstallations(*c.Ctx, &github.ListOptions{
+		PerPage: 251,
+	})
+	if err != nil {
+		return err
+	}
+	installationCount := len(installations)
+	if installationCount > 250 {
+		log.Printf("%+v installations. get thee to the market!", installationCount)
+	} else {
+		log.Printf("%+v installations. keep it up!", installationCount)
+	}
+	return nil
 }

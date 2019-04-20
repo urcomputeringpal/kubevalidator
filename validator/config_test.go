@@ -32,7 +32,7 @@ func TestValidConfigMatchesCandidates(t *testing.T) {
 	files = append(files, &github.CommitFile{
 		Filename: github.String("README.md"),
 	})
-	candidates := config.matchingCandidates(files)
+	candidates := config.matchingCandidates(&Context{}, files)
 	if len(candidates) != 1 {
 		t.Errorf("Expected 1 match, got %d", len(candidates))
 	}
@@ -45,7 +45,7 @@ func TestEmptyConfigMatchesNothing(t *testing.T) {
 		Filename: github.String("important.yaml"),
 	}
 	files = append(files, file)
-	candidates := config.matchingCandidates(files)
+	candidates := config.matchingCandidates(&Context{}, files)
 	if len(candidates) != 0 {
 		t.Errorf("found unexpected candidates! %v", candidates)
 	}

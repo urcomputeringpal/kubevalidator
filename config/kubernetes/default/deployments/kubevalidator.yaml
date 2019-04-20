@@ -30,6 +30,15 @@ spec:
           env:
           - name: PRIVATE_KEY_FILE
             value: /config/key.pem
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+
       volumes:
       - name: config
         secret:
