@@ -86,7 +86,9 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 }
 
 func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
-	schema := &KubeValidatorConfigSchema{}
+	schema := &KubeValidatorConfigSchema{
+		Version: "1.13.0",
+	}
 	var schemas []*KubeValidatorConfigSchema
 	schemas = append(schemas, schema)
 	candidate := NewCandidate(
@@ -110,8 +112,8 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against default schema"),
-			Message:         github.String("extra: Additional property extra is not allowed"),
+			Title:           github.String("Error validating Deployment against 1.13.0 schema"),
+			Message:         github.String("extra: Additional property extra is not allowed; see https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#deployment-v1-apps for more details"),
 			RawDetails:      github.String("* context: (root).spec\n* field: extra\n* property: extra\n"),
 		},
 		{
@@ -120,8 +122,8 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against default schema"),
-			Message:         github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
+			Title:           github.String("Error validating Deployment against 1.13.0 schema"),
+			Message:         github.String("spec.replicas: Invalid type. Expected: integer, given: string; see https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#deployment-v1-apps for more details"),
 			RawDetails:      github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 		},
 		{
@@ -130,8 +132,8 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 			StartLine:       github.Int(1),
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
-			Title:           github.String("Error validating Deployment against default schema"),
-			Message:         github.String("extra-container: Additional property extra-container is not allowed"),
+			Title:           github.String("Error validating Deployment against 1.13.0 schema"),
+			Message:         github.String("extra-container: Additional property extra-container is not allowed; see https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#deployment-v1-apps for more details"),
 			RawDetails:      github.String("* context: (root).spec.template.spec.containers.0\n* field: extra-container\n* property: extra-container\n"),
 		},
 	}

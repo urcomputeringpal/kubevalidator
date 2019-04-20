@@ -103,7 +103,7 @@ func (c *Candidate) Validate() Annotations {
 		} else if schema.Version != "" {
 			schemaName = schema.Version
 		} else {
-			schemaName = "default"
+			schemaName = "master"
 		}
 
 		if c.bytes == nil {
@@ -158,6 +158,21 @@ func (c *Candidate) Validate() Annotations {
 					}
 				}
 
+				var message *string
+				if schema.Version == "" || schema.Version == "master" {
+					message = github.String(error.String())
+				} else {
+					versionComponents := strings.Split(schema.Version, ".")
+					apiVersionComponents := strings.Split(result.APIVersion, "/")
+					// :eyeroll: reverse a slice
+					for i := len(apiVersionComponents)/2 - 1; i >= 0; i-- {
+						opp := len(apiVersionComponents) - 1 - i
+						apiVersionComponents[i], apiVersionComponents[opp] = apiVersionComponents[opp], apiVersionComponents[i]
+					}
+					apiVersionString := strings.Join(apiVersionComponents, "-")
+					message = github.String(fmt.Sprintf("%s; see https://kubernetes.io/docs/reference/generated/kubernetes-api/v%s/#%s-%s for more details", error.String(), strings.Join(versionComponents[:2], "."), strings.ToLower(result.Kind), apiVersionString))
+				}
+
 				annotations = append(annotations, &github.CheckRunAnnotation{
 					Path:            c.file.Filename,
 					BlobHRef:        c.file.BlobURL,
@@ -165,7 +180,7 @@ func (c *Candidate) Validate() Annotations {
 					EndLine:         &endLine,
 					AnnotationLevel: github.String("failure"),
 					Title:           github.String(fmt.Sprintf("Error validating %s against %s schema", result.Kind, schemaName)),
-					Message:         github.String(error.String()),
+					Message:         message,
 					RawDetails:      github.String(resultErrorDetailString(error)),
 				})
 			}
