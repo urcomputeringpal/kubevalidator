@@ -17,5 +17,5 @@ branches:
         - YAMBURGER
         - kubevalidator
         - Build (677203284384)
-      enforce_admins: false
+      enforce_admins: true
       restrictions: null
