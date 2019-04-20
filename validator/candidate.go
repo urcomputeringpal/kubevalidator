@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/instrumenta/kubeval/kubeval"
 	yamlpatch "github.com/krishicks/yaml-patch"
 	difflib "github.com/pmezard/go-difflib/difflib"
@@ -121,14 +122,26 @@ func (c *Candidate) Validate() Annotations {
 		results, err := kubeval.Validate(*c.bytes, c.file.GetFilename())
 
 		if err != nil {
+			if merr, ok := err.(*multierror.Error); ok {
+				merr.ErrorFormat = abbreviatedErrorFormat
+			}
+			var title *string
+			var message *string
+			if len(results) > 0 {
+				title = github.String(fmt.Sprintf("Internal error when validating %s against %s schemas from %s", results[0].Kind, schemaName, schema.SchemaLocation()))
+				message = github.String(fmt.Sprintf("This may indicate an incorrect 'apiVersion' or 'kind' field, a missing upstream schema version, or an intermittent error. Details:\n\n%s", err))
+			} else {
+				title = github.String(fmt.Sprintf("Internal error when validating against %s schemas from %s", schemaName, schema.SchemaLocation()))
+				message = github.String(fmt.Sprintf("%s", err))
+			}
 			annotations = append(annotations, &github.CheckRunAnnotation{
 				Path:            c.file.Filename,
 				BlobHRef:        c.file.BlobURL,
 				StartLine:       github.Int(1),
 				EndLine:         github.Int(1),
 				AnnotationLevel: github.String("failure"),
-				Title:           github.String(fmt.Sprintf("Error validating %s against %s schema", results[0].Kind, schemaName)),
-				Message:         github.String(fmt.Sprintf("%+v", err)),
+				Title:           title,
+				Message:         message,
 			})
 			continue
 		}
@@ -247,4 +260,18 @@ func resultErrorDetailString(e gojsonschema.ResultError) string {
 	}
 
 	return buffer.String()
+}
+
+// Like ListFormatFunc but shorter
+func abbreviatedErrorFormat(es []error) string {
+	if len(es) == 1 {
+		return es[0].Error()
+	}
+
+	points := make([]string, len(es))
+	for i, err := range es {
+		points[i] = fmt.Sprintf("* %s", err)
+	}
+
+	return strings.Join(points, "\n\t")
 }
