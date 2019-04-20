@@ -215,8 +215,6 @@ func (c *Context) changedFileList(e *github.CheckSuiteEvent) ([]*github.CommitFi
 			// skip files that weren't added or changed
 			case "removed":
 				continue
-			case "renamed":
-				continue
 			default:
 				prFiles = append(prFiles, file)
 			}
