@@ -31,8 +31,8 @@ spec:
   manifests:
   - glob: config/kubernetes/default/*/*.yaml
     schemas:
-    - version: 1.10.0
-    - version: 1.10.1
+    - version: 1.13.0
+    - version: 1.13.3
     #
     # Schema options and their defaults. See config.go for more details.
     #

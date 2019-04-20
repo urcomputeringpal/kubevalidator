@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/google/go-github/github"
 	"github.com/bmatcuk/doublestar"
+	"github.com/google/go-github/github"
+	"github.com/instrumenta/kubeval/kubeval"
 )
 
 // KubeValidatorConfig maps globs of Kubernetes config to schemas which validate
@@ -76,7 +77,7 @@ func (config *KubeValidatorConfig) Valid() bool {
 func (schema *KubeValidatorConfigSchema) SchemaLocation() string {
 	schemaFork := schema.SchemaFork
 	if schemaFork == "" {
-		schemaFork = "garethr"
+		return kubeval.DefaultSchemaLocation
 	}
-	return fmt.Sprintf("https://raw.githubusercontent.com/%s", schemaFork)
+	return fmt.Sprintf("https://raw.githubusercontent.com/%s/kubernetes-json-schema/master", schemaFork)
 }

@@ -30,8 +30,8 @@
   revision = "8ba654d047b158b6fec86a826e42954647ebb3fb"
 
 [[constraint]]
-  name = "github.com/garethr/kubeval"
-  version = "0.7.1"
+  name = "github.com/instrumenta/kubeval"
+  version = "0.9.2"
 
 [[constraint]]
   name = "github.com/bradleyfalzon/ghinstallation"

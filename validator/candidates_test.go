@@ -56,6 +56,16 @@ func TestAnnotationsForInvalidCandidates(t *testing.T) {
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
 			Title:           github.String("Error validating Deployment against master schema"),
+			Message:         github.String("selector: selector is required"),
+			RawDetails:      github.String("* context: (root).spec\n* field: selector\n* property: selector\n"),
+		},
+		{
+			Path:            github.String("deployment.yaml"),
+			BlobHRef:        github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:       github.Int(1),
+			EndLine:         github.Int(1),
+			AnnotationLevel: github.String("failure"),
+			Title:           github.String("Error validating Deployment against master schema"),
 			Message:         github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
 			RawDetails:      github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 		},
@@ -68,8 +78,7 @@ func TestAnnotationsForInvalidCandidates(t *testing.T) {
 			Title:           github.String("Error validating Deployment against master schema"),
 			Message:         github.String("template: template is required"),
 			RawDetails:      github.String("* context: (root).spec\n* field: template\n* property: template\n"),
-		},
-	}
+		}}
 
 	if len(annotations) != len(want) {
 		t.Errorf("a total of %d annotations were returned, wanted %d", len(annotations), len(want))
@@ -248,7 +257,10 @@ func TestLineNumbers(t *testing.T) {
 			matches := strings.Split(comment, " ")
 
 			if len(annotations) != (len(matches) - 1) {
-				t.Errorf("%s: expected %d annotations, got %d", path, (len(matches) - 1), len(annotations))
+				t.Errorf("%s: expected %d annotations, got %d:", path, (len(matches) - 1), len(annotations))
+				for i := range annotations {
+					t.Errorf("%d-%d: %v", annotations[i].GetStartLine(), annotations[i].GetEndLine(), annotations[i].GetMessage())
+				}
 				return nil
 			}
 

@@ -50,6 +50,16 @@ func TestAnnotationsForInvalidCandidate(t *testing.T) {
 			EndLine:         github.Int(1),
 			AnnotationLevel: github.String("failure"),
 			Title:           github.String("Error validating Deployment against master schema"),
+			Message:         github.String("selector: selector is required"),
+			RawDetails:      github.String("* context: (root).spec\n* field: selector\n* property: selector\n"),
+		},
+		{
+			Path:            github.String("deployment.yaml"),
+			BlobHRef:        github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			StartLine:       github.Int(1),
+			EndLine:         github.Int(1),
+			AnnotationLevel: github.String("failure"),
+			Title:           github.String("Error validating Deployment against master schema"),
 			Message:         github.String("spec.replicas: Invalid type. Expected: integer, given: string"),
 			RawDetails:      github.String("* context: (root).spec.replicas\n* expected: integer\n* field: spec.replicas\n* given: string\n"),
 		},
@@ -142,7 +152,7 @@ func TestAnnotationsForCandidateWithMultipleFailures(t *testing.T) {
 
 func TestAnnotationsWithCustomSchemaSuccess(t *testing.T) {
 	schema := &KubeValidatorConfigSchema{
-		Version: "1.10.0",
+		Version: "1.13.0",
 	}
 	var schemas []*KubeValidatorConfigSchema
 	schemas = append(schemas, schema)
@@ -150,11 +160,11 @@ func TestAnnotationsWithCustomSchemaSuccess(t *testing.T) {
 		&Context{
 			Event: &github.CheckSuiteEvent{},
 		}, &github.CommitFile{
-			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
-			Filename: github.String("volumeerror.yaml"),
+			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			Filename: github.String("deployment.yaml"),
 		}, schemas)
 
-	filePath, _ := filepath.Abs("../fixtures/invalid/1.6.0/volumeerror.yaml")
+	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	candidate.setBytes(&fileContents)
 	annotations := candidate.Validate()
@@ -166,7 +176,7 @@ func TestAnnotationsWithCustomSchemaSuccess(t *testing.T) {
 
 func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 	schema := &KubeValidatorConfigSchema{
-		Version: "1.6.0",
+		Version: "1.99.1",
 	}
 	var schemas []*KubeValidatorConfigSchema
 	schemas = append(schemas, schema)
@@ -174,23 +184,23 @@ func TestAnnotationsWithCustomSchemaFailure(t *testing.T) {
 		&Context{
 			Event: &github.CheckSuiteEvent{},
 		}, &github.CommitFile{
-			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
-			Filename: github.String("volumeerror.yaml"),
+			BlobURL:  github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
+			Filename: github.String("deployment.yaml"),
 		}, schemas)
 
-	filePath, _ := filepath.Abs("../fixtures/invalid/1.6.0/volumeerror.yaml")
+	filePath, _ := filepath.Abs("../fixtures/deployment.yaml")
 	fileContents, _ := ioutil.ReadFile(filePath)
 	candidate.setBytes(&fileContents)
 	annotations := candidate.Validate()
 
 	want := []*github.CheckRunAnnotation{{
-		Path:            github.String("volumeerror.yaml"),
-		BlobHRef:        github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/volumeerror.yaml"),
+		Path:            github.String("deployment.yaml"),
+		BlobHRef:        github.String("https://github.com/octocat/Hello-World/blob/837db83be4137ca555d9a5598d0a1ea2987ecfee/deployment.yaml"),
 		StartLine:       github.Int(1),
 		EndLine:         github.Int(1),
 		AnnotationLevel: github.String("failure"),
-		Title:           github.String("Error validating VolumeError against 1.6.0 schema"),
-		Message:         github.String("1 error occurred:\n\t* Problem loading schema from the network at https://raw.githubusercontent.com/garethr/kubernetes-json-schema/master/v1.6.0-standalone-strict/volumeerror.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
+		Title:           github.String("Error validating Deployment against 1.99.1 schema"),
+		Message:         github.String("1 error occurred:\n\t* Problem loading schema from the network at https://kubernetesjsonschema.dev/v1.99.1-standalone-strict/deployment-apps-v1.json: Could not read schema from HTTP, response status is 404 Not Found\n\n"),
 	}}
 
 	if len(annotations) != len(want) {

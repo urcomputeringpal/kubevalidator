@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/garethr/kubeval/kubeval"
 	"github.com/google/go-github/github"
+	"github.com/instrumenta/kubeval/kubeval"
 	yamlpatch "github.com/krishicks/yaml-patch"
 	difflib "github.com/pmezard/go-difflib/difflib"
 	"github.com/xeipuuv/gojsonschema"
