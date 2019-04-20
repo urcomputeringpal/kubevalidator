@@ -4,6 +4,6 @@ spec:
   manifests:
   - glob: config/kubernetes/default/*/*.yaml
     schemas:
-    - version: 1.10.0
-    - version: 1.10.1
+    - version: 1.13.0
+    - version: 1.13.1
       schemaFork: invalid_username23

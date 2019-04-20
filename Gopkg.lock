@@ -34,14 +34,6 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:05fb788b2944ec4532160546f534d59198215ab6b29b267eb219434dfb066970"
-  name = "github.com/garethr/kubeval"
-  packages = ["kubeval"]
-  pruneopts = "NUT"
-  revision = "36730fe8f35d69c920a790c1be126ac37cbaabb8"
-  version = "0.7.1"
-
-[[projects]]
   branch = "master"
   digest = "1:e74a21fe7fdc7fed3a36231d0321297c66b77e76d941f33fd6a7ec6664b21218"
   name = "github.com/go-test/deep"
@@ -107,6 +99,14 @@
   ]
   pruneopts = "NUT"
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
+
+[[projects]]
+  digest = "1:dc4866b4ae1bd3f86f1354973fe8c98c59e3cb66b93199f5e7fe7e898bd27b5a"
+  name = "github.com/instrumenta/kubeval"
+  packages = ["kubeval"]
+  pruneopts = "NUT"
+  revision = "ae5764e6b2ed4bbbce11d2ca9f130be4515cd9f3"
+  version = "0.9.2"
 
 [[projects]]
   branch = "master"
@@ -277,9 +277,9 @@
   input-imports = [
     "github.com/bmatcuk/doublestar",
     "github.com/bradleyfalzon/ghinstallation",
-    "github.com/garethr/kubeval/kubeval",
     "github.com/go-test/deep",
     "github.com/google/go-github/github",
+    "github.com/instrumenta/kubeval/kubeval",
     "github.com/krishicks/yaml-patch",
     "github.com/pkg/errors",
     "github.com/pmezard/go-difflib/difflib",
