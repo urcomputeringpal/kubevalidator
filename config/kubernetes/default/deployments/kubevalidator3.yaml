@@ -5,7 +5,8 @@ metadata:
   name: kubevalidator
   namespace: kubevalidator
 spec:
-  replicas: 2
+  extra: fieldssssssssssss
+  replicas: asdffadff
   selector:
     matchLabels:
       app: kubevalidator
@@ -19,6 +20,7 @@ spec:
       containers:
         - name: kubevalidator
           image: gcr.io/urcomputeringpal-public/kubevalidator
+          extra-container: container-field
           envFrom:
           - secretRef:
               name: kubevalidator
