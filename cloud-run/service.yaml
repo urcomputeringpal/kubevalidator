@@ -1,0 +1,53 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    client.knative.dev/user-image: gcr.io/urcomputeringpal-public/kubevalidator:master
+  name: kubevalidator
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '100'
+        run.googleapis.com/client-name: cloud-console
+        run.googleapis.com/execution-environment: gen1
+    spec:
+      volumes:
+      - name: kubevalidator-private-key
+        secret:
+          secretName: kubevalidator-private-key
+          items:
+          - key: '1'
+            path: key.pem
+      containers:
+      - image: gcr.io/urcomputeringpal-public/kubevalidator:master
+        volumeMounts:
+        - mountPath: /kubevalidator-private-key
+          name: kubevalidator-private-key
+        env:
+        - name: PRIVATE_KEY_FILE
+          value: /kubevalidator-private-key/key.pem
+        - name: APP_ID
+          valueFrom:
+            secretKeyRef:
+              key: '1'
+              name: kubevalidator-app-id
+        - name: CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: '1'
+              name: kubevalidator-client-id
+        - name: CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: '1'
+              name: kubevalidator-client-secret
+        - name: WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: '1'
+              name: kubevalidator-webhook-secret
+      serviceAccountName: kubevalidator@urcomputeringpal.iam.gserviceaccount.com
+  traffic:
+  - latestRevision: true
+    percent: 100
