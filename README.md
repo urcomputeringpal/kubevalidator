@@ -16,10 +16,6 @@ A GitHub App that validates the Kubernetes YAML in your GitHub PRs using [kubeva
 
 * Validate the syntax of your YAML. (Shameless plug: use [YAMBURGER](https://github.com/urcomputeringpal/yamburger) for that! It's kinda dope!)
 
-## Getting started
-
-The authors of kubevalidator maintain a hosted version of the source code you see here. [Install it today](https://github.com/apps/kubevalidator) if you're comfortable with us processing your YAML! See the section on [deploying your own instance](#deploy-your-own-instance) if you'd prefer.
-
 ## Configuration
 
 kubevalidator depends on you to tell it which YAML in your repository it should validate using a file at `.github/kubevalidator.yaml`. [This repo's config](./.github/kubevalidator.yaml) is a decent example:
